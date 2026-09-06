@@ -17,7 +17,9 @@
         @click="refresh"
       >
         <img v-if="image" :src="image" alt="图形验证码" />
-        <span v-else class="cm-loading">加载中...</span>
+        <span v-else class="cm-loading" :class="{ failed: loadFailed }">
+          {{ loadFailed ? '加载失败，点击重试' : '加载中...' }}
+        </span>
       </div>
       <p class="cm-hint">
         请输入图中 <b>{{ 4 }}</b> 位字符{{ image ? '，点击图片可换一张' : '' }}
@@ -51,12 +53,14 @@ const image = ref('')
 const captchaId = ref('')
 const code = ref('')
 const submitting = ref(false)
+const loadFailed = ref(false)
 
 async function load() {
   image.value = ''
   // 立刻清空旧 captchaId，避免用上一次的（已被消费的）去请求后端
   captchaId.value = ''
   code.value = ''
+  loadFailed.value = false
   try {
     const res = await generateCaptcha()
     image.value = res.image
@@ -64,7 +68,8 @@ async function load() {
     // 同时把 captchaId 存到 sessionStorage，request.js 拦截器会通过 X-Captcha-Id header 带上
     try { sessionStorage.setItem('ws_captcha_id', res.captchaId) } catch (_) {}
   } catch (e) {
-    /* 拦截器已提示 */
+    // 接口失败/返回异常时给出可见反馈，避免永远卡在"加载中"
+    loadFailed.value = true
   }
 }
 
@@ -91,7 +96,7 @@ async function submit() {
   if (submitting.value) return
   // 图片必须加载完成 + captchaId 必须存在，二者缺一不允许提交
   if (!image.value || !captchaId.value) {
-    ElMessage.warning('图形验证码加载中，请稍候')
+    ElMessage.warning(loadFailed.value ? '图形验证码加载失败，请点击图片重试' : '图形验证码加载中，请稍候')
     return
   }
   if (!/^[A-Za-z0-9]{4}$/.test(code.value)) {
@@ -178,6 +183,10 @@ defineExpose({ open, close, refresh, onVerifiedSuccess, onVerifiedFailed })
   .cm-loading {
     color: $text-caption;
     font-size: $fs-sm;
+
+    &.failed {
+      color: #f56c6c;
+    }
   }
 
   .cm-hint {
