@@ -527,7 +527,7 @@ async function handleLogout() {
   }
 
   .nickname {
-    max-width: 72px;
+    max-width: 120px;
     @include ellipsis;
     font-size: 13px;
     font-weight: 500;
