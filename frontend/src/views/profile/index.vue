@@ -452,9 +452,20 @@
           </div>
         </div>
         <input ref="avatarInput" type="file" accept="image/*" hidden @change="onAvatarChange" />
-        <el-button size="small" plain :loading="avatarUploading" @click="triggerAvatar">
-          {{ profileForm.avatar ? '更换头像' : '上传头像' }}
-        </el-button>
+        <div class="edit-avatar-actions">
+          <el-button size="small" plain :loading="avatarUploading" @click="triggerAvatar">
+            {{ profileForm.avatar ? '更换头像' : '上传头像' }}
+          </el-button>
+          <el-button
+            v-if="profileForm.avatar"
+            class="reset-avatar-btn"
+            link
+            :disabled="avatarUploading"
+            @click="profileForm.avatar = ''"
+          >
+            恢复默认头像
+          </el-button>
+        </div>
       </div>
       <el-form label-position="top" class="edit-form">
         <el-form-item label="昵称">
@@ -2728,6 +2739,23 @@ function startCountdown(type) {
   justify-content: center;
   opacity: 0;
   transition: opacity $transition-fast;
+}
+
+.edit-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.reset-avatar-btn {
+  font-size: 12px;
+  color: $text-secondary;
+
+  &:hover {
+    color: $color-primary;
+    background: none;
+  }
 }
 
 .edit-form {
