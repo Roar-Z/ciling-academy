@@ -779,7 +779,8 @@ async function handleRegister() {
 .forgot-mask {
   position: fixed;
   inset: 0;
-  z-index: 3000;
+  // 2000 = Element 弹层起始层级：ElMessage/ElNotification 从 2001 起自增，保证提示永远盖在遮罩上
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
