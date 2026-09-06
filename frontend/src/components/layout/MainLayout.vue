@@ -92,7 +92,7 @@
                 <el-avatar :size="32" :src="userStore.userInfo?.avatar || ''" class="user-avatar">
                   {{ avatarText }}
                 </el-avatar>
-                <span class="nickname">{{ userStore.userInfo?.nickname || '同学' }}</span>
+                <span class="nickname" :title="userStore.userInfo?.nickname">{{ userStore.userInfo?.nickname || '同学' }}</span>
                 <el-icon class="drop-icon"><ArrowDown /></el-icon>
               </div>
               <template #dropdown>
@@ -527,10 +527,10 @@ async function handleLogout() {
   }
 
   .nickname {
-    max-width: 120px;
+    max-width: 140px;
     @include ellipsis;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     color: $text-title;
   }
 
