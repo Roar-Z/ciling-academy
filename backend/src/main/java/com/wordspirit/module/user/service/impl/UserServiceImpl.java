@@ -3,7 +3,6 @@ package com.wordspirit.module.user.service.impl;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.digest.BCrypt;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wordspirit.ai.AiQuotaService;
@@ -155,11 +154,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserVo login(LoginReq req) {
+        // 防爆破：同用户名连错 5 次锁 15 分钟（Redis 计数，成功登录清零）
+        String failKey = "login:fail:" + req.getUsername();
+        String failStr = stringRedisTemplate.opsForValue().get(failKey);
+        if (failStr != null && Integer.parseInt(failStr) >= 5) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "尝试次数过多，请 15 分钟后再试");
+        }
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, req.getUsername()));
-        if (user == null || !BCrypt.checkpw(req.getPassword(), user.getPassword())) {
+        if (user == null || !passwordEncoder.matches(req.getPassword(), user.getPassword())) {
+            Long fails = stringRedisTemplate.opsForValue().increment(failKey);
+            if (fails != null && fails == 1) {
+                stringRedisTemplate.expire(failKey, Duration.ofMinutes(15));
+            }
             throw new BusinessException(ResultCode.BAD_REQUEST, "用户名或密码错误");
         }
+        stringRedisTemplate.delete(failKey);
         return buildVo(user, true);
     }
 
