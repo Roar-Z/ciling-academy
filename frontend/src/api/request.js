@@ -16,7 +16,9 @@ const AI_ERROR_MESSAGE = {
 }
 
 const service = axios.create({
-  baseURL: '/',
+  // 生产环境走 Nginx 反向代理（同源转发 /api → 后端 8080，无跨域）：保持默认 '/' 即可
+  // 特殊场景需直连后端时，在 .env.production 配置 VITE_API_BASE_URL=http://45.192.104.52:8080
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/',
   timeout: 65000,
   // 携带 cookie（图形验证码 captchaId 通过 cookie 自动传递）
   withCredentials: true
