@@ -15,7 +15,7 @@
     <artifactId>ciling-academy-backend</artifactId>
     <version>1.0.0</version>
     <name>ciling-academy-backend</name>
-    <description>词灵学园 Ciling Academy - 英语单词学习平台后端（AI增强型）</description>
+    <description>词灵学园 Ciling-Academy - 英语单词学习平台后端（AI增强型）</description>
 
     <properties>
         <java.version>17</java.version>

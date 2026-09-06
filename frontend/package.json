@@ -2,7 +2,7 @@
   "name": "ciling-academy-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "词灵学园 Ciling Academy - 英语单词学习平台 前端",
+  "description": "词灵学园 Ciling-Academy - 英语单词学习平台 前端",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,4 +1,4 @@
-# 词灵学园 · 前端（Ciling Academy Frontend）
+# 词灵学园 · 前端（Ciling-Academy Frontend）
 
 AI 增强型英语单词学习平台的前端工程。Vue 3 + Vite 5 构建，追求**加载性能**与**流量开销**的极致优化：全站 JS（含全部页面懒加载分块）仅约 1.1 MB，词灵序列帧动画经 WebP 重编码后仅 4.1 MB。
 
