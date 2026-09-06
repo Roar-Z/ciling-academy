@@ -85,6 +85,22 @@ com.wordspirit
 - MyBatis-Plus 参数化查询，没有拼 SQL 的地方
 - 删错题这类操作在服务端校验归属，改 ID 越权无效
 
+## 开发踩坑记录
+
+**数据源 URL 少了协议头，启动不报错一查全 500**。有次改配置把 `jdbc:mysql://localhost:3306/...` 写成了 `jdbc:localhost:3306/...`，应用照样正常启动，等第一个请求进来才炸。报错也很唬人：MyBatisSystemException 一层包一层，翻到最后才是真话 —— `Driver com.mysql.cj.jdbc.Driver claims to not accept jdbcUrl`。原因是 HikariCP 连接池是懒加载的，URL 校验发生在第一次借连接时，启动期根本不碰。遇到"起得来但全 500"先去日志最里层找 Caused by。
+
+**改了缓存结构后接口集体 500**。往 Redis 里换了一种值的序列化格式，结果读到的旧缓存还是老格式，反序列化直接抛异常。生产环境又不能随手 FLUSHDB。最后的做法是给缓存 key 加版本号后缀（`platform:stats:v3` → `v4`），新代码只读写新 key，旧数据等 TTL 自然过期。之后凡是要改缓存值的结构，先升 key 版本。
+
+**MySQL 8.0 不认 `ADD COLUMN IF NOT EXISTS`**。这是 MariaDB 的语法，MySQL 上直接报错。写 SQL 补丁脚本时如果有增量加列，重复执行会报 Duplicate column，忽略即可，脚本注释里要写明白，不然下次执行的人会以为是坏了。
+
+**MyBatis-Plus 的 `selectCount` 返回 Long 不是 int**。直接 `(int) mapper.selectCount(...)` 编译不过，随手强转在数字大时还会出问题。用 `.intValue()` 或者赋给 long。
+
+**PDF 里嵌中文字体，版权得挑清楚**。备考资料是后端用 OpenPDF 动态生成的，中文字体最初没当回事——微软雅黑是不可再分发的，商用要授权。最后用的文泉驿微米黑（Apache 2.0），TTF 放 resources 里 classpath 加载注册进 PDFWriter。换字体前先查协议，坑不在技术在法务。
+
+**词表数据同理**。网上现成的四级六词库不少是爬来的（比如爬有道词典的仓库），真拿去商用有风险。词表最终用的 MIT 协议的 ECDICT，来源干净。
+
+**四六级考试日期没有官方 API 可调**。按主流规则推算（6 月第三个周六、12 月第二个周六），但个别年份不按规则来，所以又补了一段已知日期的序列做校准，规则算出来和已知日期冲突时以已知日期为准。
+
 ## 常见问题
 
 **起不来，报数据源错误**：`DB_PASSWORD` 没配，去 application-local.yml 里填 MySQL 密码。
