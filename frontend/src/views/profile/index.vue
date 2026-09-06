@@ -2746,6 +2746,11 @@ function startCountdown(type) {
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
+
+  // 纵向排列，抵消 EP 相邻按钮的默认左间距
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
 }
 
 .reset-avatar-btn {
