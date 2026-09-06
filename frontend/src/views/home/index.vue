@@ -50,6 +50,7 @@
         <div class="art-backdrop"></div>
 
         <div class="art-card art-card-back">
+          <span class="live-dot"></span>
           <AppIcon name="calendar-check" :size="16" />
           <span>今日复习 12 词</span>
         </div>
@@ -57,24 +58,58 @@
         <div class="art-card art-card-main">
           <div class="am-head">
             <span class="am-label">复习卡片</span>
-            <span class="am-progress">3 / 12</span>
+            <span class="am-progress">{{ demoProgress }} / 12</span>
           </div>
-          <div class="am-word">persistent</div>
-          <div class="am-phonetic">/pəˈsɪstənt/</div>
-          <div class="am-meaning">坚持不懈的；持续的</div>
-          <div class="am-example">
-            <p class="ame-en">Persistent effort leads to success.</p>
-            <p class="ame-cn">坚持不懈的努力带来成功。</p>
-          </div>
+          <transition name="word-swap" mode="out-in">
+            <div :key="demoWord.word" class="am-word-block">
+              <div class="am-word">{{ demoWord.word }}</div>
+              <div class="am-phonetic">{{ demoWord.phonetic }}</div>
+              <div class="am-meaning">{{ demoWord.meaning }}</div>
+              <div class="am-example">
+                <p class="ame-en">{{ demoWord.exampleEn }}</p>
+                <p class="ame-cn">{{ demoWord.exampleCn }}</p>
+              </div>
+            </div>
+          </transition>
           <div class="am-tags">
             <span class="amt-tag amt-blue">重点词</span>
             <span class="amt-tag amt-green">已掌握 2/4</span>
           </div>
+          <div class="am-bar"><span :style="{ width: demoBarWidth }"></span></div>
         </div>
 
         <div class="art-card art-card-side">
           <AppIcon name="sparkles" :size="16" />
           <span>词灵AI 生成助记</span>
+        </div>
+
+        <!-- 艾宾浩斯记忆曲线：呼应核心卖点 -->
+        <div class="art-chart">
+          <div class="ac-head">
+            <span class="ac-title">艾宾浩斯记忆曲线</span>
+            <span class="ac-value">牢记率 98%</span>
+          </div>
+          <svg viewBox="0 0 220 86" class="ac-svg">
+            <line x1="6" y1="70" x2="214" y2="70" class="grid-line" />
+            <line x1="6" y1="44" x2="214" y2="44" class="grid-line" />
+            <line x1="6" y1="18" x2="214" y2="18" class="grid-line" />
+            <!-- 死记硬背：不复习的遗忘衰减 -->
+            <path d="M10,16 C 30,54 52,66 92,69 S 180,72 212,73" class="fade-line" pathLength="1" />
+            <!-- 按曲线复习：每次复习记忆率回升 -->
+            <path
+              id="memoPath"
+              d="M10,16 C 26,46 42,58 60,62 L 68,38 C 86,50 104,56 124,58 L 132,36 C 150,48 178,51 212,52"
+              class="memo-line"
+              pathLength="1"
+            />
+            <circle cx="64" cy="60" r="3.5" class="dot d1" />
+            <circle cx="128" cy="57" r="3.5" class="dot d2" />
+            <circle cx="196" cy="52" r="3.5" class="dot d3" />
+          </svg>
+          <div class="ac-legend">
+            <span><i class="lg lg-primary"></i>按曲线复习</span>
+            <span><i class="lg lg-gray"></i>死记硬背</span>
+          </div>
         </div>
       </div>
     </section>
@@ -316,7 +351,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { getPlatformStats } from '@/api/user'
@@ -474,7 +509,40 @@ const footerCols = [
   }
 ]
 
+/* Hero 示意卡片：单词自动轮换 */
+const demoWords = [
+  {
+    word: 'persistent',
+    phonetic: '/pəˈsɪstənt/',
+    meaning: '坚持不懈的；持续的',
+    exampleEn: 'Persistent effort leads to success.',
+    exampleCn: '坚持不懈的努力带来成功。'
+  },
+  {
+    word: 'resilient',
+    phonetic: '/rɪˈzɪliənt/',
+    meaning: '有韧性的；适应力强的',
+    exampleEn: 'Resilient people bounce back from setbacks.',
+    exampleCn: '有韧性的人能从挫折中恢复。'
+  },
+  {
+    word: 'diligent',
+    phonetic: '/ˈdɪlɪdʒənt/',
+    meaning: '勤奋的；勤勉的',
+    exampleEn: 'Diligent practice makes perfect.',
+    exampleCn: '勤勉的练习造就完美。'
+  }
+]
+const demoIndex = ref(0)
+const demoWord = computed(() => demoWords[demoIndex.value])
+const demoProgress = computed(() => 3 + demoIndex.value)
+const demoBarWidth = computed(() => `${Math.round((demoProgress.value / 12) * 100)}%`)
+let demoTimer = null
+
 onMounted(async () => {
+  demoTimer = setInterval(() => {
+    demoIndex.value = (demoIndex.value + 1) % demoWords.length
+  }, 4000)
   loadStats()
   if (userStore.isLogin) {
     try {
@@ -487,6 +555,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (statsRafId) cancelAnimationFrame(statsRafId)
+  if (demoTimer) clearInterval(demoTimer)
 })
 
 function go(path) {
@@ -600,8 +669,13 @@ function go(path) {
 .art-card-main {
   width: 350px;
   top: 48px;
-  left: 30px;
+  left: 110px;
   z-index: 2;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+  }
 
   .am-head {
     display: flex;
@@ -685,15 +759,64 @@ function go(path) {
       }
     }
   }
+
+  /* 记忆进度条：随单词轮换平滑推进 */
+  .am-bar {
+    margin-top: 12px;
+    height: 4px;
+    border-radius: 4px;
+    background: $border-light;
+    overflow: hidden;
+
+    span {
+      display: block;
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, $color-primary 0%, #5cb99b 100%);
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+}
+
+/* 单词切换过渡：旧词下沉淡出 / 新词上浮淡入 */
+.word-swap-enter-active {
+  animation: wordIn 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.word-swap-leave-active {
+  animation: wordOut 0.18s ease forwards;
+}
+
+@keyframes wordIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wordOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 .art-card-back {
   display: flex;
   align-items: center;
   gap: 7px;
-  width: 230px;
-  top: 8px;
-  left: 90px;
+  width: 180px;
+  height: 50px;
+  top: 10px;
+  left: 20px;
   z-index: 1;
   font-size: 13px;
   color: $text-caption;
@@ -711,6 +834,246 @@ function go(path) {
   font-size: 13px;
   color: $text-body;
   padding: 12px 16px;
+
+  svg {
+    color: $color-primary;
+  }
+}
+
+/* 艾宾浩斯记忆曲线卡：呼应产品核心卖点 */
+.art-chart {
+  position: absolute;
+  left: -46px;
+  bottom: -28px;
+  z-index: 3;
+  width: 216px;
+  background: $bg-card;
+  border: 1px solid $border-light;
+  border-radius: 14px;
+  box-shadow: $shadow-md;
+  padding: 14px 16px 12px;
+
+  .ac-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .ac-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: $text-body;
+    }
+
+    .ac-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: $color-success;
+      background: $color-success-soft;
+      padding: 2px 8px;
+      border-radius: $radius-pill;
+    }
+  }
+
+  .ac-svg {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+
+    .grid-line {
+      stroke: $border-light;
+      stroke-width: 1;
+      stroke-dasharray: 3 4;
+    }
+
+    /* 死记硬背：灰色虚线衰减 */
+    .fade-line {
+      fill: none;
+      stroke: $text-disabled;
+      stroke-width: 1.8;
+      stroke-dasharray: 4 4;
+      opacity: 0.75;
+    }
+
+    /* 按曲线复习：主色实线，循环描线绘制 */
+    .memo-line {
+      fill: none;
+      stroke: $color-primary;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: lineLoop 6s ease-in-out infinite;
+    }
+
+    /* 复习节点：随描线依次浮现，循环同步 */
+    .dot {
+      fill: $bg-card;
+      stroke: $color-primary;
+      stroke-width: 2.5;
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+
+      &.d1 {
+        animation: dotLoop1 6s ease-in-out infinite;
+      }
+
+      &.d2 {
+        animation: dotLoop2 6s ease-in-out infinite;
+      }
+
+      &.d3 {
+        animation: dotLoop3 6s ease-in-out infinite;
+      }
+    }
+  }
+
+  .ac-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 6px;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: $text-caption;
+
+      .lg {
+        width: 14px;
+        height: 3px;
+        border-radius: 2px;
+
+        &.lg-primary {
+          background: $color-primary;
+        }
+
+        &.lg-gray {
+          background: $text-disabled;
+        }
+      }
+    }
+  }
+}
+
+@keyframes lineLoop {
+  /* 描线段线性推进：线尖到达节点的时刻与节点弹出严格对应 */
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+    animation-timing-function: linear;
+  }
+  33% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  82% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  92% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+}
+
+/* 节点在线尖到达其位置的瞬间弹出（按路径长度换算：d1≈8% d2≈19% d3≈30%） */
+@keyframes dotLoop1 {
+  0%,
+  7% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  9% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes dotLoop2 {
+  0%,
+  18% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes dotLoop3 {
+  0%,
+  29% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  31% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  36% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* 曲线与节点直接完整呈现 */
+@media (prefers-reduced-motion: reduce) {
+  .live-dot::after {
+    animation: none;
+  }
+
+  .art-chart .memo-line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .art-chart .dot {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* ============ 数据指标 ============ */
