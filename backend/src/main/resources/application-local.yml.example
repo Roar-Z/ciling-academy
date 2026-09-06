@@ -1,0 +1,39 @@
+# ============================================================
+# 本地/生产私密配置示例
+# 使用方法：复制本文件为 application-local.yml 并填写真实值
+#   copy application-local.yml.example application-local.yml
+# application-local.yml 已加入 .gitignore，不会提交到仓库
+# 生产部署可改用环境变量注入同名配置（无需本文件）
+# ============================================================
+
+spring:
+  datasource:
+    # MySQL 登录密码（必填，否则启动失败）
+    password: 'your-mysql-password'
+  mail:
+    # SMTP 发件邮箱与授权码（163 邮箱在「设置 → POP3/SMTP/IMAP」开启服务后获取授权码）
+    # 不配置时邮箱验证码只打印在后端日志中（本地开发可用）
+    username: your_email@163.com
+    password: 'your-smtp-authorization-code'
+
+aliyun:
+  oss:
+    # 阿里云 OSS（不配置时头像等文件自动回退本地 uploads/ 目录存储）
+    endpoint: oss-cn-beijing.aliyuncs.com
+    bucket: your-bucket-name
+    access-key-id: 'your-oss-access-key-id'
+    access-key-secret: 'your-oss-access-key-secret'
+
+ai:
+  qwen:
+    # 阿里云百炼 API Key（https://bailian.console.aliyun.com 创建，qwen-flash 有免费额度）
+    # 不配置时词灵AI 功能自动降级，基础学习功能不受影响
+    api-key: sk-xxxxxxxxxxxxxxxxxxxxxxxx
+  qdrant:
+    # 云端 Qdrant 实例（可选，RAG 知识增强；不配置时自动降级）
+    url: https://xxxx.cloud.qdrant.io
+    api-key: 'your-qdrant-api-key'
+
+mymemory:
+  # 可选：MyMemory 翻译授权邮箱（提升每日免费额度）
+  email: your_email@163.com

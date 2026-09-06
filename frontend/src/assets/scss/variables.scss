@@ -1,0 +1,132 @@
+// =============================================================
+// 词灵学园 全局 SCSS 设计 Token
+// 风格：克制的单一主色 + 精细中性色阶 + 适中圆角 + 分层阴影
+// 参考主流学习类产品（百词斩/扇贝/墨墨）的干净信息密度
+// =============================================================
+
+/* ---------- 品牌色（项目硬性规定，不可改） ---------- */
+$color-primary: #3A8C89;
+$color-success: #52C41A;
+$color-warning: #FA8C16;
+$color-danger: #F53F3F;
+$color-info: #86909C;
+
+/* ---------- 主色阶（hover / active / 浅底） ---------- */
+$primary-1: #F0F7F6;
+$primary-2: #E2F0EF;
+$primary-3: #C6E2E0;
+$primary-5: #3A8C89;
+$primary-6: #2F7471;
+$primary-7: #255C59;
+
+/* ---------- 中性色阶 ---------- */
+$gray-1: #FFFFFF;
+$gray-2: #F7F8FA;
+$gray-3: #F2F3F5;
+$gray-4: #E5E6EB;
+$gray-5: #C9CDD4;
+$gray-6: #86909C;
+$gray-7: #4E5969;
+$gray-8: #272E3B;
+$gray-9: #1D2129;
+
+/* ---------- 语义色（兼容旧命名，全站统一引用） ---------- */
+$color-primary-light: $primary-6;
+$color-primary-deep: $primary-7;
+$color-primary-soft: $primary-1;
+
+$text-title: $gray-9;      // 标题
+$text-primary: $gray-9;    // 兼容旧名
+$text-body: $gray-7;       // 正文
+$text-regular: $gray-7;    // 兼容旧名
+$text-caption: $gray-6;    // 辅助说明
+$text-secondary: $gray-6;  // 兼容旧名
+$text-disabled: $gray-5;
+$text-on-primary: #FFFFFF;
+
+$bg-page: $gray-2;
+$bg-card: $gray-1;
+$bg-hover: $gray-3;
+$bg-soft: #FAFBFC;
+$bg-selected: $primary-1;
+
+$border-base: $gray-4;
+$border-color: $gray-4;    // 兼容旧名
+$border-light: #F0F1F3;
+
+/* ---------- 功能色柔和底 ---------- */
+$color-success-soft: #F0FBEA;
+$color-warning-soft: #FFF7E6;
+$color-danger-soft: #FEF0F0;
+$color-mint: #2BD9C2;
+$color-mint-soft: #E6FFFB;
+$color-sun: #FFC53D;
+$color-sun-soft: #FFF7E0;
+$color-rose: #FF6B9C;
+$color-rose-soft: #FFE6EE;
+$color-violet: #7B5CFF;
+$color-violet-soft: #F3E8FF;
+
+/* ---------- 圆角（项目硬性规定） ---------- */
+$radius-base: 8px;
+$radius-card: 12px;
+$radius-large: 16px;
+$radius-sm: 6px;
+$radius-pill: 999px;
+
+/* ---------- 阴影（分层） ---------- */
+$shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+$shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);   // 项目规定
+$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
+$shadow-hover: 0 6px 20px rgba(58, 140, 137, 0.12);   // 兼容旧名
+$shadow-primary: 0 4px 14px rgba(58, 140, 137, 0.20);
+$shadow-elevated: 0 6px 24px rgba(37, 92, 89, 0.12);  // 兼容旧名
+
+/* ---------- 动效 ---------- */
+$transition-normal: 240ms ease-out;   // 项目规定
+$transition-fast: 160ms ease-out;
+$transition-slow: 420ms ease-out;
+
+/* ---------- 布局 ---------- */
+$page-max-width: 1200px;
+$safe-padding: 22px;
+$nav-height: 60px;
+$line-height-base: 1.65;
+
+/* ---------- 字号层级 ---------- */
+$fs-xs: 11px;
+$fs-sm: 12px;
+$fs-base: 13px;
+$fs-md: 14px;
+$fs-lg: 15px;
+$fs-xl: 16px;
+$fs-2xl: 18px;
+$fs-3xl: 20px;
+$fs-4xl: 24px;
+$fs-5xl: 28px;
+$fs-6xl: 32px;
+
+/* ---------- 间距 ---------- */
+$sp-1: 4px;
+$sp-2: 8px;
+$sp-3: 12px;
+$sp-4: 16px;
+$sp-5: 20px;
+$sp-6: 24px;
+$sp-8: 32px;
+$sp-10: 40px;
+$sp-12: 48px;
+
+/* ---------- 渐变（仅用于必要点缀，克制使用） ---------- */
+$gradient-primary: linear-gradient(135deg, #3A8C89 0%, #5CA9A5 100%);
+
+// Element Plus 主题变量覆盖
+$el-color-primary: $color-primary;
+$el-color-primary-light-3: #75AFAC;
+$el-color-primary-light-5: #9DC6C4;
+$el-color-primary-light-7: #C4DDDC;
+$el-color-primary-light-8: #D8E8E7;
+$el-color-primary-light-9: #EBF4F3;
+$el-color-primary-dark-2: #2E706E;

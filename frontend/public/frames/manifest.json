@@ -1,0 +1,30 @@
+﻿{
+  "greet": {
+    "prefix": "/frames/greet/video_",
+    "pad": 3,
+    "count": 96,
+    "fps": 24,
+    "looping": true
+  },
+  "holding": {
+    "prefix": "/frames/holding/video_",
+    "pad": 3,
+    "count": 96,
+    "fps": 24,
+    "looping": true
+  },
+  "thinking": {
+    "prefix": "/frames/thinking/video_",
+    "pad": 3,
+    "count": 60,
+    "fps": 24,
+    "looping": true
+  },
+  "talking": {
+    "prefix": "/frames/talking/video_",
+    "pad": 3,
+    "count": 57,
+    "fps": 24,
+    "looping": true
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "title": "四六级写作万能句型手册",
+  "year": "2026 冲刺版",
+  "sections": [
+    {
+      "name": "开篇引题 · 万能开头",
+      "items": [
+        {"s": "With the rapid development of society, ... has become a heated topic among the general public.", "c": "随着社会的快速发展，……已成为大众热议的话题。"},
+        {"s": "Nowadays, there is a growing awareness that...", "c": "如今，人们越来越意识到……"},
+        {"s": "Recently, the issue of ... has aroused wide public concern.", "c": "近来，……的问题引起了公众的广泛关注。"},
+        {"s": "When it comes to ..., opinions vary from person to person.", "c": "谈到……，人们观点各不相同。"},
+        {"s": "It is universally acknowledged that ... plays an increasingly important role in our daily life.", "c": "众所周知，……在我们的日常生活中扮演着越来越重要的角色。"},
+        {"s": "Nowadays, ... has become an inevitable part of modern society.", "c": "如今，……已成为现代社会不可或缺的一部分。"},
+        {"s": "With the advent of the information age, ... is changing our way of life.", "c": "随着信息时代的到来，……正在改变我们的生活方式。"},
+        {"s": "Along with the advance of science and technology, more and more people attach importance to...", "c": "随着科技的进步，越来越多的人重视起……"},
+        {"s": "There is no denying that ... has both advantages and disadvantages.", "c": "不可否认，……既有利也有弊。"},
+        {"s": "As the proverb goes, \"...\" This saying reveals a profound truth.", "c": "正如谚语所说：“……”。这句话揭示了一个深刻的道理。"}
+      ]
+    },
+    {
+      "name": "图表描述 · 数据表达",
+      "items": [
+        {"s": "As is shown in the chart, the number of ... increased sharply from ... to ... during the past five years.", "c": "如图所示，在过去五年里，……的数量从……急剧增长到……"},
+        {"s": "According to the statistics, ... accounts for nearly 60% of the total.", "c": "据统计，……占总数的近 60%。"},
+        {"s": "The table reflects a clear trend that ... is on the rise.", "c": "表格反映出……正呈上升趋势的清晰趋势。"},
+        {"s": "By contrast, the percentage of ... dropped by 15%.", "c": "相比之下，……的比例下降了 15%。"},
+        {"s": "It can be seen from the graph that ... fluctuated slightly over the period.", "c": "从图表可以看出，在此期间……略有波动。"},
+        {"s": "The figures indicate that ... has doubled compared with that of last year.", "c": "数据表明，……与去年相比翻了一番。"},
+        {"s": "What is worth noting is that the gap between ... and ... is narrowing.", "c": "值得注意的是，……与……之间的差距正在缩小。"},
+        {"s": "The chart provides some interesting data regarding...", "c": "该图表提供了一些有关……的有趣数据。"},
+        {"s": "A close analysis of the data reveals that...", "c": "对数据的仔细分析表明……"},
+        {"s": "Such a change may be attributed to the following factors.", "c": "这种变化可以归因于以下几个因素。"}
+      ]
+    },
+    {
+      "name": "论证展开 · 分析说理",
+      "items": [
+        {"s": "There are several reasons accounting for this phenomenon. Firstly, ... Secondly, ... Finally, ...", "c": "造成这种现象的原因有几方面。首先……其次……最后……"},
+        {"s": "The reasons for this are not far to seek. To begin with, ... In addition, ...", "c": "其中的原因不难寻找。首先……此外……"},
+        {"s": "It is obvious that ... contributes greatly to the development of...", "c": "显然，……极大地促进了……的发展。"},
+        {"s": "A case in point is that..., which shows the importance of...", "c": "一个典型的例子是……，这说明了……的重要性。"},
+        {"s": "What's more, ... enables us to broaden our horizons and enrich our experience.", "c": "此外，……使我们能够开阔视野、丰富经历。"},
+        {"s": "Only in this way can we solve the problem effectively.", "c": "只有这样，我们才能有效解决这个问题。（倒装加分句型）"},
+        {"s": "It is high time that we placed great emphasis on...", "c": "现在正是我们高度重视……的时候了。"},
+        {"s": "We should take effective measures to cope with the situation.", "c": "我们应当采取有效措施应对这一局面。"},
+        {"s": "As far as I am concerned, the advantages of ... far outweigh its disadvantages.", "c": "就我而言，……的优点远大于缺点。"},
+        {"s": "Every coin has two sides, and ... is no exception.", "c": "凡事都有两面，……也不例外。"}
+      ]
+    },
+    {
+      "name": "列举举例 · 增强说服力",
+      "items": [
+        {"s": "Take ... for example, ...", "c": "以……为例，……"},
+        {"s": "A recent survey conducted by ... indicates that 78% of college students...", "c": "最近由……开展的一项调查表明，78% 的大学生……"},
+        {"s": "For one thing, ...; for another, ...", "c": "一方面……；另一方面……"},
+        {"s": "To illustrate, ...", "c": "举例来说，……"},
+        {"s": "Statistics from authoritative institutions demonstrate that...", "c": "来自权威机构的数据证明……"},
+        {"s": "Numerous examples can be given, but this will suffice.", "c": "例子不胜枚举，但这个已足够说明问题。"},
+        {"s": "According to a recent study, people who ... tend to ...", "c": "根据最近的一项研究，……的人往往……"},
+        {"s": "My own experience serves as a good example.", "c": "我自己的经历就是一个很好的例子。"},
+        {"s": "Such examples can be found easily in our daily life.", "c": "这样的例子在我们的日常生活中很容易找到。"},
+        {"s": "The following example may help illustrate the point.", "c": "下面这个例子可能有助于说明这一点。"}
+      ]
+    },
+    {
+      "name": "对比转折 · 逻辑衔接",
+      "items": [
+        {"s": "On the one hand, ...; on the other hand, ...", "c": "一方面……；另一方面……"},
+        {"s": "However, the other side of the coin is that...", "c": "然而，问题的另一面是……"},
+        {"s": "Despite the fact that ..., ... still remains a serious problem.", "c": "尽管……，……仍然是一个严重的问题。"},
+        {"s": "While some people believe that ..., others hold the opposite view.", "c": "虽然有人认为……，但另一些人持相反观点。"},
+        {"s": "Nevertheless, we should not neglect the fact that...", "c": "然而，我们不应忽视……的事实。"},
+        {"s": "In contrast to ..., ... is more ...", "c": "与……相比，……更加……"},
+        {"s": "Admittedly, ... has its merits, but its drawbacks should not be overlooked.", "c": "诚然，……有其优点，但其缺点也不容忽视。"},
+        {"s": "Compared with ..., ... enjoys the advantage of...", "c": "与……相比，……具有……的优势。"},
+        {"s": "On the contrary, ...", "c": "恰恰相反，……"},
+        {"s": "Even so, the benefits of ... are beyond doubt.", "c": "即便如此，……的好处是毋庸置疑的。"}
+      ]
+    },
+    {
+      "name": "结尾升华 · 万能收束",
+      "items": [
+        {"s": "In conclusion, ... is of great significance to both individuals and society.", "c": "总之，……对个人和社会都具有重要意义。"},
+        {"s": "To sum up, we should ... and at the same time encourage others to...", "c": "总而言之，我们应当……，同时鼓励他人……"},
+        {"s": "From what has been discussed above, we may safely arrive at the conclusion that...", "c": "通过以上讨论，我们可以有把握地得出结论……"},
+        {"s": "Only by joint efforts can we build a better future.", "c": "只有通过共同努力，我们才能创造更美好的未来。"},
+        {"s": "It is essential that effective actions should be taken to prevent the situation from worsening.", "c": "必须采取有效行动防止情况恶化。"},
+        {"s": "As long as we stick to ..., we are bound to achieve success eventually.", "c": "只要我们坚持……，就终将取得成功。"},
+        {"s": "Let us bear in mind that ... and spare no effort to...", "c": "让我们铭记……，并不遗余力地去……"},
+        {"s": "In a word, the trend of ... is irresistible in modern society.", "c": "总之，……的趋势在现代社会是不可阻挡的。"},
+        {"s": "Considering all these factors, we may reasonably come to the conclusion that...", "c": "考虑到所有这些因素，我们可以合理地得出结论……"},
+        {"s": "The future of ... lies in our hands, and it is our duty to...", "c": "……的未来掌握在我们手中，……是我们的责任。"}
+      ]
+    }
+  ]
+}

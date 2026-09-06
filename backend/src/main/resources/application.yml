@@ -1,0 +1,148 @@
+server:
+  port: ${SERVER_PORT:8080}
+  # API 响应 gzip 压缩：JSON 文本压缩率约 70%~85%，浏览器/axios 自动解压，前端零改动
+  compression:
+    enabled: true
+    mime-types: application/json,text/html,text/plain,text/css,application/javascript
+    # 超过 1KB 才压缩，避免小响应浪费 CPU
+    min-response-size: 1024
+
+spring:
+  application:
+    name: ciling-academy
+  # 本地开发私密配置：从 application-local.yml 读取（已加入 .gitignore，不入仓库）
+  # 首次启动请复制 application-local.yml.example 为 application-local.yml 并填写真实值
+  config:
+    import: optional:classpath:application-local.yml
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:word_spirit}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 3000ms
+      lettuce:
+        # Redis 连接池：复用连接降低高频读写（额度/限流/会话）开销
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 2000ms
+  mail:
+    # 邮件发送配置（SMTP 授权码等私密信息在 application-local.yml 或环境变量中提供）
+    # 不配置或 host 为空时，验证码将只在日志中打印，便于本地开发
+    host: ${MAIL_HOST:smtp.163.com}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+  # 文件上传（本地兜底目录，未配置 OSS 时使用）
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+# ===================== 阿里云 OSS 对象存储 =====================
+# ⚠️ AccessKey 属高危敏感信息，严禁写死在本文件；在 application-local.yml 或环境变量提供
+# 不配置或 endpoint/bucket 为空时，自动回退为本地文件存储（便于本地开发）
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT:}
+    bucket: ${OSS_BUCKET:}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    # 对象访问基址：留空则自动拼接为 https://{bucket}.{endpoint}/
+    # 若已绑定自定义域名（如 https://cdn.cilingxueyuan.com），填写该域名即可
+    base-url: ${OSS_BASE_URL:}
+    # 资源归类目录（按业务模块分桶路径），用文件名归纳分类
+    # 头像最终 key 形如：avatar/2026/09/01/{userId}_{uuid}.jpg
+    dir:
+      avatar: avatar
+
+# ===================== 跨域白名单 =====================
+# 生产环境通过环境变量 APP_CORS_ORIGINS 覆盖（逗号分隔），如：
+# APP_CORS_ORIGINS=https://www.cilingxueyuan.com,https://cilingxueyuan.com
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    # 生产环境用 Slf4jImpl：SQL 日志走 logging.level 控制，避免 stdout 全量打印拖慢响应
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+
+# SQL 日志：本地调试需要看 SQL 时改为 debug
+logging:
+  level:
+    com.wordspirit: info
+
+# ===================== 词灵AI 配置 =====================
+ai:
+  # 总开关：关闭后所有AI能力优雅降级，其余学习功能不受影响
+  enable: ${AI_ENABLE:true}
+  # 每人每日AI调用额度（次）
+  daily-quota: 10
+  # 单次大模型调用超时（毫秒）
+  timeout: 45000
+  # 失败重试次数（0=不重试）
+  retry-times: 1
+  # 通义千问（阿里云百炼 DashScope）——OpenAI 兼容接口
+  # API Key 获取：https://bailian.console.aliyun.com  →  我的API-KEY（私密，勿入库）
+  qwen:
+    api-key: ${AI_API_KEY:}
+    # 百炼 OpenAI 兼容接口地址
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    # 免费/省token 的轻量高速模型（qwen-flash 有免费额度；也可换成 qwen-turbo）
+    model: qwen-flash
+    # 向量模型（用于 Qdrant RAG 检索）
+    embedding-model: text-embedding-v3
+    # 深度思考：切换到支持思维链的 qwen3 系列并开启 enable_thinking
+    # 若账号无该模型额度，把 thinking-enabled 设为 false 即可降级为常规模型（前端开关点了不切模型）
+    thinking-model: qwen3-30b-a3b-thinking-2507
+    thinking-max-tokens: 4096
+    thinking-enabled: true
+    # 联网搜索：切换到支持内置联网的模型并开启 enable_search
+    # 若百炼账号不支持联网，把 search-enabled 设为 false 即可降级
+    search-model: qwen-plus
+    search-enabled: true
+  qdrant:
+    # 云端 Qdrant 实例地址与 API Key（私密，勿入库）
+    url: ${QDRANT_URL:}
+    api-key: ${QDRANT_API_KEY:}
+    collection: ling-word-kb
+
+# ===================== 普通翻译整句兜底（免费引擎） =====================
+libretranslate:
+  # 普通翻译整句兜底：默认主用 MyMemory 免 key 公共 API（约 5000 词/天免费，无需 key）
+  # 若你有本地/云端 LibreTranslate 实例，填这里即可启用（质量更好、可离线）；留空则只用 MyMemory
+  # 启动本地容器： docker compose -f docker-compose.libretranslate.yml up -d
+  url:
+
+mymemory:
+  # 可选 MyMemory 授权邮箱（免 key）：填你的邮箱后额度从匿名约 5000 词/天提升到约 50000 字符/天
+  # 首次调用翻译 API 后，MyMemory 会向你邮箱发确认邮件，点击其中链接即授权；不填则用匿名额度
+  email: ${MYMEMORY_EMAIL:}

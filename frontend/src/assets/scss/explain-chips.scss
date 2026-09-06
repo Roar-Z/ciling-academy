@@ -1,0 +1,79 @@
+/*
+ * 长难句解析 chip 样式（全局，v-html 注入内容专用）
+ *
+ * 为什么放到这里而不是 scoped 块里：
+ *   renderExplain() 经 v-html 注入到页面，注入的 DOM 不带 scoped data-v 属性。
+ *   Vue 的 :deep() 编译对顶级独立选择器不可靠（实测颜色规则会丢失），
+ *   即使在 SFC 第二个非 scoped <style> 块里也偶有 HMR 缓存问题。
+ *   把样式放在 main.js 引入的全局 SCSS 文件里，Vite 会编进全局 CSS bundle，
+ *   100% 命中任何位置注入的 .aab-* / .seg-* 元素。
+ *
+ * 视觉设计：
+ *   - 柔和、饱和度适中的角色色，文字色即主色，无背景块
+ *   - 字号统一 14px，行高 1.85，节奏统一
+ *   - 值内容深灰正常字重，虚词浅灰弱化，顿号极浅灰
+ *   - chip 内紧凑连接，靠字色 + 字重区分角色，不打断阅读专注力
+ */
+
+.aab-chip,
+.seg-chip {
+  display: inline;
+  white-space: normal;
+  line-height: 1.85;
+  font-size: 14px;
+}
+
+.aab-role,
+.seg-role {
+  font-weight: 600;
+  margin-right: 2px;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.aab-role-subject,
+.seg-role-subject     { color: #2563eb; }   /* 主语 - 蓝 */
+.aab-role-verb,
+.seg-role-verb        { color: #d97706; }   /* 动词/谓语 - 琥珀 */
+.aab-role-object,
+.seg-role-object      { color: #16a34a; }   /* 宾语 - 翠绿 */
+.aab-role-attr,
+.seg-role-attr        { color: #9333ea; }   /* 定语 - 紫 */
+.aab-role-adverbial,
+.seg-role-adverbial   { color: #0891b2; }   /* 状语 - 青 */
+.aab-role-complement,
+.seg-role-complement  { color: #dc2626; }   /* 补语 - 红 */
+.aab-role-predicative,
+.seg-role-predicative { color: #ca8a04; }   /* 表语 - 金棕 */
+
+.aab-copula,
+.seg-copula {
+  color: #9ca3af;
+  margin: 0 1px;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.aab-text,
+.seg-text {
+  color: #1f2937;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.aab-dot,
+.seg-dot {
+  color: #d1d5db;
+  margin: 0 3px;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.aab-quote,
+.seg-quote {
+  font-style: normal;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 0 1px;
+}

@@ -1,0 +1,40 @@
+# ============ 依赖与构建产物 ============
+node_modules/
+dist/
+dist-ssr/
+target/
+
+# ============ IDE ============
+.idea/
+.vscode/
+*.iml
+
+# ============ 私密配置（严禁提交） ============
+backend/src/main/resources/application-local.yml
+
+# ============ 运行时文件 ============
+*.log
+hs_err_pid*
+backend/uploads/
+uploads/
+
+# ============ 系统文件 ============
+.DS_Store
+Thumbs.db
+$null
+
+# ============ 本地临时/大文件（不入库） ============
+_tmp_*
+verify.ps1
+.tmp_zips/
+*.zip
+*.glb
+_tb*.ps1
+_tb2.ps1
+_tb_apply.ps1
+_tb_inspect.ps1
+_tb_test.ps1
+scan_empty_java.bat
+scan_java.py
+vite-restart.*
+docker-compose.libretranslate.yml.bak

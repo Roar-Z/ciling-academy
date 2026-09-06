@@ -1,0 +1,22 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+dist-ssr/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 日志与临时文件
+*.log
+npm-debug.log*
+_tmp_*
+*.tmp
+verify.ps1
+
+# 系统文件
+.DS_Store
+Thumbs.db

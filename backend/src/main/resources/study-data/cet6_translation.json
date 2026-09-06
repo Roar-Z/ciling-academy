@@ -1,0 +1,81 @@
+{
+  "words": [
+    {"w": "Spring Festival", "ipa": "/sprɪŋ ˈfestɪvl/", "pos": "n.", "mean": "春节（中国最重要的传统节日）"},
+    {"w": "Lantern Festival", "ipa": "/ˈlæntən ˈfestɪvl/", "pos": "n.", "mean": "元宵节（农历正月十五）"},
+    {"w": "Dragon Boat Festival", "ipa": "/ˈdræɡən bəʊt ˈfestɪvl/", "pos": "n.", "mean": "端午节（纪念屈原）"},
+    {"w": "Mid-Autumn Festival", "ipa": "/mɪd ˈɔːtəm ˈfestɪvl/", "pos": "n.", "mean": "中秋节（赏月吃月饼）"},
+    {"w": "the Four Great Inventions", "ipa": "/fɔː ɡreɪt ɪnˈvenʃnz/", "pos": "n.", "mean": "四大发明（造纸、印刷、火药、指南针）"},
+    {"w": "papermaking", "ipa": "/ˈpeɪpəmeɪkɪŋ/", "pos": "n.", "mean": "造纸术"},
+    {"w": "compass", "ipa": "/ˈkʌmpəs/", "pos": "n.", "mean": "指南针；罗盘"},
+    {"w": "gunpowder", "ipa": "/ˈɡʌnpaʊdə/", "pos": "n.", "mean": "火药"},
+    {"w": "moveable-type printing", "ipa": "/ˈmuːvəbl taɪp ˈprɪntɪŋ/", "pos": "n.", "mean": "活字印刷术"},
+    {"w": "the Silk Road", "ipa": "/sɪlk rəʊd/", "pos": "n.", "mean": "丝绸之路（古代贸易通道）"},
+    {"w": "the Great Wall", "ipa": "/ɡreɪt wɔːl/", "pos": "n.", "mean": "长城（世界文化遗产）"},
+    {"w": "the Forbidden City", "ipa": "/fəˈbɪdn ˈsɪti/", "pos": "n.", "mean": "紫禁城；故宫"},
+    {"w": "the Terracotta Warriors", "ipa": "/ˌterəˈkɒtə ˈwɒriəz/", "pos": "n.", "mean": "兵马俑（西安秦始皇陵）"},
+    {"w": "Confucianism", "ipa": "/kənˈfjuːʃənɪzəm/", "pos": "n.", "mean": "儒家思想（孔子创立）"},
+    {"w": "Taoism", "ipa": "/ˈtaʊɪzəm/", "pos": "n.", "mean": "道家思想；道教"},
+    {"w": "imperial examination", "ipa": "/ɪmˈpɪəriəl ɪɡˌzæmɪˈneɪʃn/", "pos": "n.", "mean": "科举制度（古代选官考试）"},
+    {"w": "calligraphy", "ipa": "/kəˈlɪɡrəfi/", "pos": "n.", "mean": "书法（中国传统艺术）"},
+    {"w": "paper cutting", "ipa": "/ˈpeɪpə ˈkʌtɪŋ/", "pos": "n.", "mean": "剪纸（民间艺术）"},
+    {"w": "embroidery", "ipa": "/ɪmˈbrɔɪdəri/", "pos": "n.", "mean": "刺绣（苏绣、湘绣等）"},
+    {"w": "porcelain", "ipa": "/ˈpɔːsəlɪn/", "pos": "n.", "mean": "瓷器（中国英文名 China 由此而来）"},
+    {"w": "shadow puppetry", "ipa": "/ˈʃædəʊ ˈpʌpətri/", "pos": "n.", "mean": "皮影戏（非遗艺术）"},
+    {"w": "Beijing Opera", "ipa": "/beɪˈdʒɪŋ ˈɒprə/", "pos": "n.", "mean": "京剧（国粹）"},
+    {"w": "Tai Chi", "ipa": "/ˌtaɪ ˈtʃiː/", "pos": "n.", "mean": "太极拳（养生运动）"},
+    {"w": "traditional Chinese medicine", "ipa": "/trəˈdɪʃənl ˌtʃaɪˈniːz ˈmedsn/", "pos": "n.", "mean": "中医（TCM）"},
+    {"w": "the 24 solar terms", "ipa": "/ˈsəʊlə tɜːmz/", "pos": "n.", "mean": "二十四节气（农耕时间体系）"},
+    {"w": "Four Treasures of the Study", "ipa": "/ˈtreʒəz əv ðə ˈstʌdi/", "pos": "n.", "mean": "文房四宝（笔墨纸砚）"},
+    {"w": "Chinese knot", "ipa": "/ˌtʃaɪˈniːz nɒt/", "pos": "n.", "mean": "中国结（吉祥饰品）"},
+    {"w": "lunar calendar", "ipa": "/ˈluːnə ˈkælɪndə/", "pos": "n.", "mean": "农历（按月相周期制定）"},
+    {"w": "reunion dinner", "ipa": "/ˌriːˈjuːniən ˈdɪnə/", "pos": "n.", "mean": "团圆饭（年夜饭）"},
+    {"w": "red envelope", "ipa": "/red ˈenvələʊp/", "pos": "n.", "mean": "红包（压岁钱）"}
+  ],
+  "sections": [
+    {
+      "name": "第一编 · 发展变化类句型",
+      "items": [
+        {"s": "With the development of ..., ... has/have witnessed great changes.", "c": "随着……的发展，……见证了巨大变化。例：With the development of economy, China has witnessed great changes in tourism."},
+        {"s": "More and more people begin to realize the importance of...", "c": "越来越多的人开始意识到……的重要性。例：More and more people begin to realize the importance of protecting traditional culture."},
+        {"s": "... is becoming increasingly popular in China.", "c": "……在中国变得越来越流行。例：Tai Chi is becoming increasingly popular among young people."},
+        {"s": "In recent years, ... has developed rapidly.", "c": "近年来，……发展迅速。例：In recent years, high-speed railways have developed rapidly in China."}
+      ]
+    },
+    {
+      "name": "第二编 · 起源历史类句型",
+      "items": [
+        {"s": "..., which originated in ..., has a history of more than ... years.", "c": "……起源于……，已有……多年的历史。例：Beijing Opera, which originated in the Qing Dynasty, has a history of more than 200 years."},
+        {"s": "It is said that ... dates back to ...", "c": "据说……可以追溯到……。例：It is said that the custom dates back to the Tang Dynasty."},
+        {"s": "... was first invented in ancient China.", "c": "……最早发明于古代中国。例：Papermaking was first invented in ancient China."},
+        {"s": "According to the legend / historical records, ...", "c": "据传说/史料记载，……。例：According to historical records, the Silk Road started from Chang'an."}
+      ]
+    },
+    {
+      "name": "第三编 · 评价地位类句型",
+      "items": [
+        {"s": "... is regarded / honored as one of the most ... in the world.", "c": "……被誉为世界上最……之一。例：The Great Wall is regarded as one of the greatest wonders in the world."},
+        {"s": "... plays an increasingly important role in ...", "c": "……在……中扮演着越来越重要的角色。例：Traditional festivals play an important role in Chinese culture."},
+        {"s": "... is famous / well-known for its ...", "c": "……以……而闻名。例：Jingdezhen is famous for its high-quality porcelain."},
+        {"s": "It is universally acknowledged that ...", "c": "大家公认……。例：It is universally acknowledged that Confucianism has influenced East Asia for centuries."}
+      ]
+    },
+    {
+      "name": "第四编 · 象征意义类句型",
+      "items": [
+        {"s": "... is a symbol of ...", "c": "……是……的象征。例：The dragon is a symbol of good luck in Chinese culture."},
+        {"s": "..., which symbolizes ..., is often used on ...", "c": "……象征……，常用于……。例：The Chinese knot, which symbolizes reunion, is often used on festivals."},
+        {"s": "... represents the wisdom of the Chinese people.", "c": "……代表了中国人民的智慧。例：The Four Great Inventions represent the wisdom of the Chinese people."},
+        {"s": "... carries people's best wishes for ...", "c": "……承载着人们对……的美好祝愿。例：Red envelopes carry people's best wishes for the new year."}
+      ]
+    },
+    {
+      "name": "第五编 · 万能收尾句型",
+      "items": [
+        {"s": "Therefore, it is of great significance to ...", "c": "因此，……具有重要意义。例：Therefore, it is of great significance to protect intangible cultural heritage."},
+        {"s": "Only in this way can we ...", "c": "只有这样我们才能……（倒装加分句型）。例：Only in this way can we pass on traditional culture to future generations."},
+        {"s": "... has attracted worldwide attention.", "c": "……吸引了全世界的关注。例：China's achievements in poverty reduction have attracted worldwide attention."},
+        {"s": "It can be predicted that ... will ... in the future.", "c": "可以预见，未来……将会……。例：It can be predicted that traditional culture will regain its popularity."}
+      ]
+    }
+  ]
+}

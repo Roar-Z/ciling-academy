@@ -1,0 +1,136 @@
+// =============================================================
+// 全局 SCSS 混入
+// =============================================================
+
+// 显式引入变量（mixins.scss 是独立编译单元，需要自己 @use）
+@use "./variables.scss" as *;
+
+// ---------- 卡片 ----------
+// 标准卡片：白底 + 细边框 + 轻阴影（克制，不用大阴影）
+@mixin card($padding: $sp-5, $radius: $radius-card) {
+  background: $bg-card;
+  border: 1px solid $border-light;
+  border-radius: $radius;
+  padding: $padding;
+}
+
+// 卡片悬浮：轻微上移 + 主色描边 + 中等阴影
+@mixin card-hover {
+  transition: all $transition-fast;
+  &:hover {
+    border-color: $primary-3;
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+  }
+}
+
+// 可点击卡片（带悬浮）
+@mixin card-clickable($padding: $sp-5) {
+  @include card($padding);
+  @include card-hover;
+  cursor: pointer;
+}
+
+// 内嵌块（卡片内的浅底区域）
+@mixin inset-block($padding: $sp-3 $sp-4, $radius: $radius-base) {
+  background: $bg-soft;
+  border: 1px solid $border-light;
+  border-radius: $radius;
+  padding: $padding;
+}
+
+// ---------- 文本 ----------
+@mixin ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@mixin ellipsis-multi($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ---------- 布局 ----------
+@mixin page-container {
+  max-width: $page-max-width;
+  margin: 0 auto;
+  padding: $sp-6 $safe-padding $sp-10;
+}
+
+@mixin page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $sp-3;
+  margin-bottom: $sp-5;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// ---------- 按钮 ----------
+@mixin btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $sp-1;
+  border-radius: $radius-base;
+  font-weight: 500;
+  transition: all $transition-fast;
+}
+
+@mixin btn-primary {
+  @include btn-base;
+  background: $color-primary;
+  color: #fff;
+  border: 1px solid $color-primary;
+  &:hover { background: $primary-6; border-color: $primary-6; }
+  &:active { background: $primary-7; }
+}
+
+// 按钮悬浮上浮（兼容旧名 hover-float）
+@mixin hover-float {
+  transition: transform $transition-fast, box-shadow $transition-fast;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+// ---------- 状态 ----------
+// 空/错误/加载状态容器
+@mixin state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $sp-12 $sp-5;
+  color: $text-caption;
+  text-align: center;
+}
+
+// ---------- 滚动条美化 ----------
+@mixin thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: $gray-4 transparent;
+  &::-webkit-scrollbar { width: 6px; height: 6px; }
+  &::-webkit-scrollbar-thumb {
+    background: $gray-4;
+    border-radius: $radius-pill;
+    &:hover { background: $gray-5; }
+  }
+  &::-webkit-scrollbar-track { background: transparent; }
+}

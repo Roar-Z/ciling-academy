@@ -1,0 +1,14 @@
+# 本地 LibreTranslate 翻译引擎（免费、无限、可离线）
+# 启动： docker compose -f docker-compose.libretranslate.yml up -d
+# 停止： docker compose -f docker-compose.libretranslate.yml down
+# 首次会自动下载 en/zh 模型，首次翻译可能稍慢；之后走本地缓存
+services:
+  libretranslate:
+    image: libretranslate/libretranslate
+    container_name: libretranslate
+    ports:
+      - "5000:5000"
+    environment:
+      # 只加载英<->中，减少镜像体积与启动时间
+      - LT_LOAD_ONLY=en,zh
+    restart: unless-stopped

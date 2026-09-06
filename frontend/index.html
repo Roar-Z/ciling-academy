@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F7F8FA" />
+    <title>词灵学园 - 英语单词学习平台</title>
+    <!-- 首屏兜底：CSS 未加载时直接渲染浅灰骨架屏（国内主流刷新效果），
+         不白屏 / 不黑屏 / 不转圈，Vue 挂载后平滑替换为真实内容 -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f7f8fa;
+      }
+
+      #app {
+        min-height: 100vh;
+      }
+
+      .app-boot {
+        position: fixed;
+        inset: 0;
+        background: #f7f8fa;
+      }
+
+      .boot-skeleton {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 22px;
+      }
+
+      .boot-nav {
+        height: 60px;
+        background: #ffffff;
+        border-bottom: 1px solid #edeeff;
+      }
+
+      .boot-body {
+        padding-top: 22px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .boot-card {
+        height: 120px;
+        border-radius: 12px;
+        background-color: #eef0f2;
+        background-image: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.75) 50%,
+          transparent 100%
+        );
+        background-size: 45% 100%;
+        background-repeat: no-repeat;
+        background-position: -45% 0;
+        animation: boot-sweep 1.4s ease-in-out infinite;
+      }
+
+      .boot-card.b2 {
+        height: 160px;
+      }
+
+      .boot-card.b3 {
+        height: 96px;
+      }
+
+      @keyframes boot-sweep {
+        to {
+          background-position: 145% 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Vue 挂载前显示浅灰骨架屏，挂载后由 Vue 自动替换 -->
+      <div class="app-boot">
+        <div class="boot-skeleton">
+          <div class="boot-nav"></div>
+          <div class="boot-body">
+            <div class="boot-card"></div>
+            <div class="boot-card b2"></div>
+            <div class="boot-card b3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
