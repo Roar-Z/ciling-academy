@@ -145,6 +145,21 @@ public class UserController {
                 pickCaptchaId(body, request)));
     }
 
+    /** 忘记密码发送验证码（公开接口）：验证码只能发到已注册邮箱 */
+    @PostMapping("/email-code-reset")
+    public Result<Integer> sendResetPasswordEmailCode(@RequestBody Map<String, String> body,
+                                                      jakarta.servlet.http.HttpServletRequest request) {
+        return Result.ok(userService.sendEmailCode(null, "reset_password", body.get("email"),
+                pickCaptchaId(body, request)));
+    }
+
+    /** 忘记密码重置（公开接口，凭注册邮箱+邮箱验证码） */
+    @PostMapping("/reset-password")
+    public Result<UserVo> resetPassword(@RequestBody Map<String, String> body) {
+        return Result.ok(userService.resetPassword(body.get("email"), body.get("code"),
+                body.get("newPassword")));
+    }
+
     /** captchaId 优先从 body 读，其次 cookie，最后 X-Captcha-Id header（axios 拦截器自动塞） */
     private static String pickCaptchaId(Map<String, String> body, jakarta.servlet.http.HttpServletRequest req) {
         String a = body.get("captchaId");

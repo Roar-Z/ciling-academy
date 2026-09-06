@@ -46,6 +46,10 @@
               <el-form-item prop="password">
                 <el-input v-model="loginForm.password" type="password" placeholder="密码" show-password :prefix-icon="Lock" />
               </el-form-item>
+              <div class="login-aux">
+                <span></span>
+                <a href="javascript:;" class="forgot-link" @click="openForgotDialog">忘记密码？</a>
+              </div>
               <el-button type="primary" size="large" class="submit-btn" :loading="loading" @click="handleLogin">
                 登 录
               </el-button>
@@ -108,14 +112,97 @@
     </div>
 
     <CaptchaModal ref="captchaModalRef" title="安全验证" @verified="onCaptchaVerified" />
+
+    <!-- 忘记密码弹窗 -->
+    <transition name="forgot-pop">
+      <div v-if="showForgot" class="forgot-mask" @click.self="closeForgotDialog">
+        <div class="forgot-dialog">
+          <button class="fd-close" aria-label="关闭" @click="closeForgotDialog">
+            <el-icon><Close /></el-icon>
+          </button>
+
+          <!-- 步骤一：填写信息重置 -->
+          <template v-if="forgotStep === 'form'">
+            <div class="fd-icon">
+              <el-icon :size="28"><Lock /></el-icon>
+            </div>
+            <h3 class="fd-title">重置密码</h3>
+            <p class="fd-desc">输入注册邮箱，我们将发送验证码帮你重置密码</p>
+
+            <el-form
+              ref="forgotFormRef"
+              :model="forgotForm"
+              :rules="forgotRules"
+              size="large"
+              @keyup.enter="handleResetPassword"
+            >
+              <el-form-item prop="email">
+                <el-input v-model="forgotForm.email" placeholder="注册邮箱" :prefix-icon="Message" />
+              </el-form-item>
+              <el-form-item prop="emailCode">
+                <div class="fd-code-row">
+                  <el-input
+                    v-model="forgotForm.emailCode"
+                    placeholder="6 位邮箱验证码"
+                    maxlength="6"
+                    :prefix-icon="Key"
+                  />
+                  <el-button
+                    :disabled="!canSendForgotCode"
+                    :loading="forgotCodeSending"
+                    @click="openForgotCaptcha"
+                  >
+                    {{ forgotCodeCountdown > 0 ? `${forgotCodeCountdown}s 后重发` : '获取验证码' }}
+                  </el-button>
+                </div>
+              </el-form-item>
+              <el-form-item prop="newPassword">
+                <el-input
+                  v-model="forgotForm.newPassword"
+                  type="password"
+                  placeholder="新密码（6-20位）"
+                  show-password
+                  :prefix-icon="Lock"
+                />
+              </el-form-item>
+              <el-form-item prop="confirmPassword">
+                <el-input
+                  v-model="forgotForm.confirmPassword"
+                  type="password"
+                  placeholder="确认新密码"
+                  show-password
+                  :prefix-icon="Lock"
+                />
+              </el-form-item>
+              <el-button type="primary" size="large" class="fd-submit" :loading="resetting" @click="handleResetPassword">
+                确认重置
+              </el-button>
+              <p class="fd-back" @click="backToLogin">返回登录</p>
+            </el-form>
+          </template>
+
+          <!-- 步骤二：重置成功 -->
+          <template v-else>
+            <div class="fd-icon fd-icon-success">
+              <el-icon :size="30"><CircleCheckFilled /></el-icon>
+            </div>
+            <h3 class="fd-title">密码重置成功</h3>
+            <p class="fd-desc">你的密码已更新，请使用新密码重新登录</p>
+            <el-button type="primary" size="large" class="fd-submit" @click="backToLogin">
+              去登录
+            </el-button>
+          </template>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Key, Lock, Message, Postcard, User } from '@element-plus/icons-vue'
-import { sendRegisterEmailCode } from '@/api/user'
+import { CircleCheckFilled, Close, Key, Lock, Message, Postcard, User } from '@element-plus/icons-vue'
+import { resetPassword, sendRegisterEmailCode, sendResetPasswordEmailCode } from '@/api/user'
 import CaptchaModal from '@/components/common/CaptchaModal.vue'
 import { useUserStore } from '@/store/user'
 
@@ -186,11 +273,15 @@ const canSendRegisterCode = computed(
   () => emailPattern.test(registerForm.email) && registerCodeCountdown.value === 0
 )
 
+// 当前图形验证码服务的场景：register 注册 / forgot 忘记密码
+const captchaScene = ref('register')
+
 function openRegisterCaptcha() {
   if (!emailPattern.test(registerForm.email)) {
     ElMessage.warning('请先输入正确的邮箱')
     return
   }
+  captchaScene.value = 'register'
   captchaModalRef.value?.open()
 }
 
@@ -199,23 +290,30 @@ async function onCaptchaVerified({ captchaId }) {
   // 防抖：即使 CaptchaModal 多次 emit 也不能并发发送
   if (verifying.value) return
   verifying.value = true
-  registerCodeSending.value = true
+  const isForgot = captchaScene.value === 'forgot'
+  if (isForgot) forgotCodeSending.value = true
+  else registerCodeSending.value = true
   try {
-    const remain = await sendRegisterEmailCode(registerForm.email.trim(), captchaId)
+    const email = isForgot ? forgotForm.email.trim() : registerForm.email.trim()
+    const remain = isForgot
+      ? await sendResetPasswordEmailCode(email, captchaId)
+      : await sendRegisterEmailCode(email, captchaId)
     ElNotification({
       title: '验证码已发送',
-      message: `已发送至 ${registerForm.email}，请查收邮件\n今日还可发送 ${remain} 次 · 同一邮箱 60 秒内只能发一次 · 10 分钟内有效`,
+      message: `已发送至 ${email}，请查收邮件\n今日还可发送 ${remain} 次 · 同一邮箱 60 秒内只能发一次 · 10 分钟内有效`,
       type: 'success',
       duration: 5000,
       position: 'top-right'
     })
     captchaModalRef.value?.onVerifiedSuccess()
-    startRegisterCountdown()
+    if (isForgot) startForgotCountdown()
+    else startRegisterCountdown()
   } catch (e) {
-    // 邮箱格式/限流等错误 → 关闭弹窗
+    // 邮箱格式/限流/未注册等错误 → 关闭弹窗
     captchaModalRef.value?.close()
   } finally {
     registerCodeSending.value = false
+    forgotCodeSending.value = false
     verifying.value = false
   }
 }
@@ -232,8 +330,108 @@ function startRegisterCountdown() {
   }, 1000)
 }
 
+/* ---------- 忘记密码 ---------- */
+const showForgot = ref(false)
+const forgotStep = ref('form') // form 填写信息 / done 重置成功
+const forgotFormRef = ref()
+const resetting = ref(false)
+const forgotCodeSending = ref(false)
+const forgotCodeCountdown = ref(0)
+let forgotCountdownTimer = null
+
+const forgotForm = reactive({
+  email: '',
+  emailCode: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const forgotRules = {
+  email: [
+    { required: true, message: '请输入注册邮箱', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+  ],
+  emailCode: [
+    { required: true, message: '请输入邮箱验证码', trigger: 'blur' },
+    { pattern: /^\d{6}$/, message: '请输入 6 位数字验证码', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '新密码长度需为 6-20 位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      validator: (rule, value, cb) =>
+        value !== forgotForm.newPassword ? cb(new Error('两次密码不一致')) : cb(),
+      trigger: 'blur'
+    }
+  ]
+}
+
+const canSendForgotCode = computed(
+  () => emailPattern.test(forgotForm.email) && forgotCodeCountdown.value === 0
+)
+
+function openForgotDialog() {
+  forgotForm.email = ''
+  forgotForm.emailCode = ''
+  forgotForm.newPassword = ''
+  forgotForm.confirmPassword = ''
+  forgotStep.value = 'form'
+  showForgot.value = true
+}
+
+function closeForgotDialog() {
+  showForgot.value = false
+}
+
+/** 重置成功/返回登录：关弹窗并切到登录 tab */
+function backToLogin() {
+  showForgot.value = false
+  activeTab.value = 'login'
+}
+
+function openForgotCaptcha() {
+  if (!emailPattern.test(forgotForm.email)) {
+    ElMessage.warning('请先输入正确的注册邮箱')
+    return
+  }
+  captchaScene.value = 'forgot'
+  captchaModalRef.value?.open()
+}
+
+function startForgotCountdown() {
+  forgotCodeCountdown.value = 60
+  if (forgotCountdownTimer) clearInterval(forgotCountdownTimer)
+  forgotCountdownTimer = setInterval(() => {
+    forgotCodeCountdown.value--
+    if (forgotCodeCountdown.value <= 0) {
+      clearInterval(forgotCountdownTimer)
+      forgotCountdownTimer = null
+    }
+  }, 1000)
+}
+
+async function handleResetPassword() {
+  try {
+    await forgotFormRef.value.validate()
+  } catch (e) {
+    return // 校验未通过
+  }
+  resetting.value = true
+  try {
+    await resetPassword(forgotForm.email.trim(), forgotForm.emailCode.trim(), forgotForm.newPassword)
+    forgotStep.value = 'done'
+  } catch (e) {
+    /* 拦截器已提示 */
+  } finally {
+    resetting.value = false
+  }
+}
+
 onBeforeUnmount(() => {
   if (registerCountdownTimer) clearInterval(registerCountdownTimer)
+  if (forgotCountdownTimer) clearInterval(forgotCountdownTimer)
 })
 
 async function handleLogin() {
@@ -523,6 +721,169 @@ async function handleRegister() {
   .divider {
     margin: 0 $sp-2;
     color: $border-base;
+  }
+}
+
+/* ---------- 忘记密码弹窗 ---------- */
+.forgot-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $sp-5;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.forgot-dialog {
+  width: 340px;
+  max-width: 100%;
+  background: $bg-card;
+  border-radius: 20px;
+  padding: $sp-8 $sp-6 $sp-6;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+
+  .fd-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: $gray-2;
+    color: $text-caption;
+    cursor: pointer;
+    @include flex-center;
+    transition: background $transition-fast, color $transition-fast;
+
+    &:hover {
+      background: $border-light;
+      color: $text-regular;
+    }
+  }
+
+  .fd-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: rgba(61, 154, 126, 0.12);
+    color: $color-primary;
+    @include flex-center;
+  }
+
+  .fd-icon-success {
+    background: rgba(82, 196, 26, 0.12);
+    color: #52c41a;
+    animation: fdPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .fd-title {
+    margin-top: $sp-4;
+    font-size: 20px;
+    font-weight: 700;
+    color: $text-title;
+  }
+
+  .fd-desc {
+    margin-top: $sp-1;
+    margin-bottom: $sp-5;
+    font-size: $fs-sm;
+    color: $text-caption;
+    line-height: 1.6;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 14px;
+  }
+
+  .fd-code-row {
+    display: flex;
+    gap: $sp-2;
+    width: 100%;
+
+    .el-input {
+      flex: 1;
+    }
+
+    .el-button {
+      width: 112px;
+      flex-shrink: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .fd-submit {
+    width: 100%;
+    height: 44px;
+    margin-top: $sp-2;
+    border-radius: 999px;
+    font-size: $fs-md;
+  }
+
+  .fd-back {
+    margin-top: $sp-4;
+    font-size: $fs-sm;
+    color: $text-caption;
+    cursor: pointer;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $color-primary;
+    }
+  }
+}
+
+/* 弹窗入场/退场 */
+.forgot-pop-enter-active {
+  transition: opacity 0.25s ease;
+
+  .forgot-dialog {
+    animation: forgotSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+.forgot-pop-leave-active {
+  transition: opacity 0.2s ease;
+
+  .forgot-dialog {
+    transition: transform 0.2s ease;
+  }
+}
+
+.forgot-pop-enter-from,
+.forgot-pop-leave-to {
+  opacity: 0;
+
+  .forgot-dialog {
+    transform: scale(0.88);
+  }
+}
+
+@keyframes forgotSpring {
+  0% {
+    transform: scale(0.88) translateY(12px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fdPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 

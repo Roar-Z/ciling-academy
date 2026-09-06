@@ -28,6 +28,10 @@ export const sendEmailCode = (type, email, captchaId) =>
 /** 注册阶段发送邮箱验证码（公开接口，无需登录） */
 export const sendRegisterEmailCode = (email, captchaId) =>
   request.post('/api/user/email-code-public', { type: 'bind_email', email, captchaId })
+export const sendResetPasswordEmailCode = (email, captchaId) =>
+  request.post('/api/user/email-code-reset', { email, captchaId })
+export const resetPassword = (email, code, newPassword) =>
+  request.post('/api/user/reset-password', { email, code, newPassword })
 export const updateEmail = (email, code) => request.put('/api/user/email', { email, code })
 export const changePassword = (oldPassword, newPassword, code) =>
   request.put('/api/user/password', { oldPassword, newPassword, code })

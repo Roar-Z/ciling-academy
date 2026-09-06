@@ -297,9 +297,16 @@ public class UserServiceImpl implements UserService {
         if (StrUtil.isBlank(email) || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "邮箱格式不正确");
         }
-        // 注册阶段（userId 为 null）只允许 bind_email 类型
+        // 匿名场景（注册/忘记密码）只允许 bind_email / reset_password
         if (userId == null) {
-            if (!"bind_email".equals(type)) {
+            if ("reset_password".equals(type)) {
+                // 忘记密码：验证码只能发给已注册邮箱
+                User byEmail = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                        .eq(User::getEmail, email.trim().toLowerCase()));
+                if (byEmail == null) {
+                    throw new BusinessException(ResultCode.BAD_REQUEST, "该邮箱未注册");
+                }
+            } else if (!"bind_email".equals(type)) {
                 throw new BusinessException(ResultCode.BAD_REQUEST, "不支持的验证码类型");
             }
         } else if ("change_password".equals(type)) {
@@ -414,6 +421,28 @@ public class UserServiceImpl implements UserService {
         update.setPassword(passwordEncoder.encode(newPassword));
         userMapper.updateById(update);
         return buildVo(userMapper.selectById(userId), false);
+    }
+
+    @Override
+    public UserVo resetPassword(String email, String code, String newPassword) {
+        if (StrUtil.isBlank(email) || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "邮箱格式不正确");
+        }
+        String emailLower = email.trim().toLowerCase();
+        checkEmailCode("reset_password", emailLower, code);
+        if (newPassword == null || newPassword.length() < 6 || newPassword.length() > 20) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "新密码长度需在 6-20 位之间");
+        }
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getEmail, emailLower));
+        if (user == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "该邮箱未注册");
+        }
+        User update2 = new User();
+        update2.setId(user.getId());
+        update2.setPassword(passwordEncoder.encode(newPassword));
+        userMapper.updateById(update2);
+        return buildVo(userMapper.selectById(user.getId()), false);
     }
 
     @Override

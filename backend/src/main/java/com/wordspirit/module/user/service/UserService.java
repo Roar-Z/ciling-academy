@@ -42,6 +42,9 @@ public interface UserService {
     /** 修改密码（需原密码+邮箱验证码） */
     UserVo changePassword(Long userId, String oldPassword, String newPassword, String code);
 
+    /** 忘记密码重置（公开接口，凭注册邮箱+邮箱验证码，无需原密码） */
+    UserVo resetPassword(String email, String code, String newPassword);
+
     /** 注销账号（需邮箱验证码，删除全部业务数据，邮箱冻结 7 天） */
     void deleteAccount(Long userId, String code);
 
