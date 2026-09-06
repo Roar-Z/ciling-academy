@@ -1,60 +1,54 @@
 # 词灵学园 Ciling-Academy
 
-![version](https://img.shields.io/badge/version-1.0.0-10b981) ![JDK](https://img.shields.io/badge/JDK-17-blue) ![Spring%20Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-6db33f) ![Vue](https://img.shields.io/badge/Vue-3.5-42b883) ![MySQL](https://img.shields.io/badge/MySQL-8-4479a1) ![Redis](https://img.shields.io/badge/Redis-7-ff4438)
+![version](https://img.shields.io/badge/version-1.0.0-10b981) ![JDK](https://img.shields.io/badge/JDK%2017-blue) ![Spring%20Boot%203.4-6db33f](https://img.shields.io/badge/Spring%20Boot%203.4-6db33f) ![Vue%203.5-42b883](https://img.shields.io/badge/Vue%203.5-42b883)
 
-一个 AI 增强型英语单词学习平台。以艾宾浩斯记忆曲线安排复习计划，以词灵AI 辅助理解
-长难句、阅读与翻译，配合试卷测验、错题本与游戏化激励，让"背了就忘"变成"真正记住"。
+一个英语单词学习平台。复习计划按艾宾浩斯遗忘曲线排，单词看不懂可以让词灵AI 拆解长难句、
+讲阅读、做翻译，背完还能做试卷、玩单词小游戏检验效果。
 
-**设计理念：AI 增强，而非 AI 驱动。** 大模型只负责内容生成；背单词、复习调度、
-试卷批改、游戏计分等核心业务全部由程序实现。关闭词灵AI，基础学习功能完全不受影响。
+说一下 AI 的定位：大模型只负责生成内容，复习调度、批改、计分这些核心逻辑全部是程序自己
+实现的。所以不配置 AI Key 也能正常用，只是少几个 AI 功能，不会整个系统瘫掉。
 
-## 功能特性
+## 功能
 
-**学习**
-- 背单词与艾宾浩斯复习：到期词优先、逾期越久越靠前，熟悉度四级流转
-- 生词本：答错降熟悉度并清零复习计数，复习答对升级
-- 试卷与错题本：AI 生成多题型试卷、自动批改，错题分页管理、批量移除
-- 学习报告：今日已学/待复习/连续天数一目了然
+背单词部分：
 
-**词灵AI**
-- 长难句分析助手 / 阅读助手 / 翻译助手 / 自由答疑
-- 结构化内容渲染为卡片，可一键收藏为 AI 笔记
-- 额度管控 + 全局内容缓存 + RAG 知识增强 + 多层降级容错
+- 生词学习、艾宾浩斯复习，到期单词优先推送，逾期越久排得越靠前
+- 生词本，熟悉度四级流转，答错降级并重置复习计数
+- AI 试卷（多种题型自动批改）+ 错题本，错题支持分页和批量移除
+- 学习报告，今日已学、待复习、连续天数
 
-**趣味与激励**
-- 10 款单词小游戏：金币、星星、排行榜，跨游戏词池去重防重复刷词
-- 金币商城：勋章、称号、词库包、备考资料（后端动态生成 PDF）
-- 成长体系：20 级等级、23 项成就、连续签到、活跃度任务与节点奖励
+词灵AI 部分：
 
-**站点**
-- 个人中心 / 今日任务 / 工具盒 / 静态文档页（用户协议、隐私政策、帮助中心等）
+- 长难句分析助手、阅读助手、翻译助手、自由答疑
+- 返回的内容渲染成卡片，可以一键收藏成笔记
+- 有额度管控、全局缓存和 RAG 知识增强，同一个问题不会重复烧 Key
+
+其他：
+
+- 10 款单词小游戏，有金币、星星和排行榜，词池做了跨游戏去重
+- 金币商城，能兑换勋章、称号、词库包和备考资料（资料 PDF 是后端动态生成的）
+- 等级、成就、连续签到、活跃度任务这些常规激励
+- 个人中心、今日任务、工具盒、用户协议/隐私政策等静态页
 
 ## 技术栈
 
-| 端 | 技术 |
-| --- | --- |
-| 后端 | Spring Boot 3.4 · Spring Security Crypto（BCrypt）· MySQL 8 · Redis · Qdrant · MyBatis-Plus |
-| 前端 | Vue 3.5 · Element Plus（子路径按需引入）· Vite 5 · Pinia · Vue Router · SCSS |
-| AI | 通义千问（阿里云百炼 OpenAI 兼容接口）· Qdrant 向量检索 |
+- 后端：Spring Boot 3.4、MySQL 8、Redis、MyBatis-Plus，密码加密用了 spring-security-crypto 的 BCrypt
+- 前端：Vue 3.5、Element Plus（子路径按需引入）、Vite 5、Pinia、SCSS
+- AI：通义千问（阿里云百炼的 OpenAI 兼容接口），RAG 检索用的 Qdrant
 
 ## 快速开始
 
-### 环境要求
+环境：JDK 17+、Maven 3.8+、Node 18+，本地装好 MySQL 8 和 Redis。想用 AI 功能的话
+去阿里云百炼申请个 API Key，`qwen-flash` 有免费额度，不申请也不影响其他功能。
 
-- JDK 17+ · Maven 3.8+ · Node.js 18+
-- MySQL 8（默认 3306）· Redis（默认 6379）
-- 阿里云百炼 API Key（可选：`qwen-flash` 有免费额度；不配置则 AI 功能降级，其余功能正常）
-
-### 1. 初始化数据库
+1. 建库，执行两个 SQL：
 
 ```bash
 mysql -uroot -p < backend/src/main/resources/db/schema.sql
 mysql -uroot -p < backend/src/main/resources/db/data.sql
 ```
 
-### 2. 填写私密配置
-
-仓库内**不含任何明文密钥**。首次运行前：
+2. 配置私密信息。仓库里不放明文密钥，先把示例复制一份：
 
 ```bash
 cd backend/src/main/resources
@@ -62,77 +56,71 @@ copy application-local.yml.example application-local.yml   # Windows
 # cp application-local.yml.example application-local.yml   # macOS / Linux
 ```
 
-编辑 `application-local.yml`，至少填入本地 MySQL 密码。该文件已被 `.gitignore`
-排除；生产部署也可以不用该文件，改为注入同名环境变量（`DB_PASSWORD`、
-`AI_API_KEY`、`OSS_ACCESS_KEY_ID` 等，详见 [application.yml](backend/src/main/resources/application.yml) 注释）。
+然后打开 `application-local.yml`，至少把 MySQL 密码填上。这个文件在 .gitignore 里，
+不会被提交。生产环境也可以不用这个文件，直接注入同名环境变量，变量名清单写在
+[application.yml](backend/src/main/resources/application.yml) 的注释里。
 
-### 3. 启动后端
+3. 起后端，默认 8080：
 
 ```bash
 cd backend
-mvn spring-boot:run          # 默认 8080，API 响应自动 gzip 压缩
+mvn spring-boot:run
 ```
 
-### 4. 启动前端
+4. 起前端：
 
 ```bash
 cd frontend
 npm install
-npm run dev                  # http://localhost:5173，/api 自动代理到 8080
+npm run dev
 ```
+
+访问 http://localhost:5173，接口自动代理到 8080，不用处理跨域。
 
 ## 目录结构
 
 ```
 ciling-academy/
-├─ backend/                          # Spring Boot 3 后端（详见 backend/README.md）
+├─ backend/                          # 后端，细节见 backend/README.md
 │  ├─ src/main/java/com/wordspirit/
-│  │  ├─ ai/                         # 词灵AI 基础设施（额度/限流/缓存/RAG）
-│  │  ├─ common/                     # 统一返回/异常/分页/用户上下文
-│  │  ├─ config/                     # Web、CORS、密码加密、OSS、拦截器
-│  │  └─ module/                     # 16 个业务模块（user、review、paper、game、shop…）
+│  │  ├─ ai/                         # AI 基础设施：额度、限流、缓存、RAG
+│  │  ├─ common/                     # 统一返回、全局异常、分页
+│  │  ├─ config/                     # Web、CORS、密码加密、OSS
+│  │  └─ module/                     # 业务模块，共 16 个
 │  └─ src/main/resources/
-│     ├─ application.yml             # 敏感项全部为 ${ENV:} 占位符
-│     ├─ application-local.yml.example
+│     ├─ application.yml             # 敏感项全是 ${ENV:} 占位符
 │     └─ db/schema.sql               # 建表脚本
-├─ frontend/                         # Vue 3 前端（详见 frontend/README.md）
-│  ├─ src/                           # views / components / api / store / router
-│  ├─ public/frames/                 # 词灵序列帧动画（WebP，4.1 MB）
-│  └─ vite.config.js                 # 按需引入 + 构建优化
-├─ docs/                             # 后端架构描述、调用流程与时序、设计稿
-└─ deploy/                           # 部署辅助（LibreTranslate 容器等）
+├─ frontend/                         # 前端，细节见 frontend/README.md
+│  ├─ src/
+│  ├─ public/frames/                 # 词灵序列帧动画（WebP）
+│  └─ vite.config.js
+├─ docs/                             # 架构描述、调用时序、设计稿
+└─ deploy/                           # 部署辅助脚本
 ```
 
-## 安全设计
+## 安全上做了什么
 
-| 威胁 | 防护措施 |
-| --- | --- |
-| 拖库撞库 | 密码使用 Spring Security **BCryptPasswordEncoder** 加盐哈希（$2a$10$），永不存储明文 |
-| 密码爆破 | 登录同用户名连续失败 5 次锁定 15 分钟（Redis 计数），成功登录自动清除 |
-| 用户枚举 | 登录失败统一返回「用户名或密码错误」 |
-| 跨站滥用 | CORS 白名单仅放行指定前端来源（默认本机 5173，生产经 `APP_CORS_ORIGINS` 配置） |
-| 会话劫持 | Token 为服务端随机 UUID 存 Redis（7 天滑动续期），可随时吊销 |
-| 机器人刷量 | 图形验证码 + 邮箱验证码（60s 间隔、每日上限）+ AI 额度与 QPS 限流 |
-| SQL 注入 | MyBatis-Plus 全参数化查询，无字符串拼接 SQL |
-| 越权访问 | 登录拦截器统一鉴权；资源类接口服务端校验归属（如错题删除仅限本人） |
-| 密钥泄露 | 全部密钥走环境变量 / gitignore 的 application-local.yml，仓库零明文密钥 |
-| 抓包窃听 | 生产部署请启用 HTTPS；API 层已开启 gzip + 服务端会话校验 |
+- 密码用 BCrypt 加盐哈希存储，数据库被拖了也拿不到明文，存量密码格式兼容无需迁移
+- 登录防爆破：同一个用户名连续错 5 次，锁 15 分钟（Redis 计数）
+- 登录失败提示统一是"用户名或密码错误"，不暴露账号是否存在
+- CORS 是白名单制，默认只放行本机 5173，生产环境用 `APP_CORS_ORIGINS` 配自己的域名
+- 会话 Token 是服务端生成的随机 UUID 存 Redis，7 天滑动过期，可以随时踢下线
+- 验证码有图形码和邮箱码两层，发邮件有 60 秒间隔和每日上限
+- SQL 全部走 MyBatis-Plus 参数化，没有字符串拼接
+- 错题删除这类接口在服务端校验数据归属，改 ID 越权拿不到别人的数据
+- 异常统一由全局处理器返回友好文案，堆栈不会漏到前端
 
-## 性能与流量优化
+生产部署记得上 HTTPS，这一层应用代码替代不了。
 
-**前端**（详见 [frontend/README.md](frontend/README.md)）
+## 性能与流量
 
-- Element Plus 子路径按需引入：产物 -960 KB，最大 chunk 仅 112 KB
-- 路由级代码分割 + `vue-vendor` 长效缓存分包，全站 JS 约 1.1 MB
-- 词灵序列帧 PNG → WebP（76.4 MB → 4.1 MB）、logo 压缩（398 KB → 6/20 KB）
-- Iconify 离线图标包：运行时零图标请求
+前端做过一轮比较彻底的优化：Element Plus 改成子路径按需引入（用官方 resolver 会因为
+主入口的副作用导入导致 tree-shaking 失效，整包 960KB 全进产物），路由全部懒加载，
+框架依赖拆成 vue-vendor 长缓存。词灵的序列帧动画从 PNG 重编码成 WebP，体积从 76.4MB
+降到 4.1MB。细节写在 [frontend/README.md](frontend/README.md)。
 
-**后端 / 接口**
-
-- API 响应 gzip 压缩（JSON 压缩率约 70%~85%，浏览器自动解压）
-- Redis Lettuce 连接池复用连接；SQL 日志走 Slf4j 分级控制
-- AI 全局缓存：相同输入只调用一次大模型（Redis 热点 + MySQL 持久化）
-- 词典走本地 MySQL + Redis 查询，不依赖外部 API
+后端这边：API 响应开了 gzip（JSON 压缩率大概 70%~85%），Redis 配了 Lettuce 连接池，
+AI 调用做了全局缓存，同一个输入只调一次大模型。
 
 ## 相关文档
 
@@ -143,4 +131,4 @@ ciling-academy/
 
 ## 许可
 
-本项目仅供学习交流使用。
+仅供学习交流使用。
