@@ -276,6 +276,7 @@ const registerRules = {
 // 注册阶段：邮箱验证码倒计时
 const registerCodeSending = ref(false)
 const registerCodeCountdown = ref(0)
+const registerCodeSent = ref(false) // 是否已成功发送过验证码（未发送时提交要给明确引导）
 const verifying = ref(false)
 let registerCountdownTimer = null
 const captchaModalRef = ref()
@@ -317,8 +318,13 @@ async function onCaptchaVerified({ captchaId }) {
       position: 'top-right'
     })
     captchaModalRef.value?.onVerifiedSuccess()
-    if (isForgot) startForgotCountdown()
-    else startRegisterCountdown()
+    if (isForgot) {
+      forgotCodeSent.value = true
+      startForgotCountdown()
+    } else {
+      registerCodeSent.value = true
+      startRegisterCountdown()
+    }
   } catch (e) {
     // 邮箱格式/限流/未注册等错误 → 关闭弹窗
     captchaModalRef.value?.close()
@@ -348,6 +354,7 @@ const forgotFormRef = ref()
 const resetting = ref(false)
 const forgotCodeSending = ref(false)
 const forgotCodeCountdown = ref(0)
+const forgotCodeSent = ref(false) // 是否已成功发送过验证码
 let forgotCountdownTimer = null
 
 const forgotForm = reactive({
@@ -388,6 +395,7 @@ function openForgotDialog() {
   forgotForm.emailCode = ''
   forgotForm.newPassword = ''
   forgotForm.confirmPassword = ''
+  forgotCodeSent.value = false
   forgotStep.value = 'form'
   showForgot.value = true
 }
@@ -424,17 +432,25 @@ function startForgotCountdown() {
 }
 
 async function handleResetPassword() {
+  // 未发送过验证码：明确引导而不是静默拦截
+  if (!forgotCodeSent.value) {
+    ElMessage.warning('请先点击「获取验证码」，完成邮箱验证后再重置密码')
+    return
+  }
   try {
     await forgotFormRef.value.validate()
-  } catch (e) {
-    return // 校验未通过
+  } catch (fields) {
+    // 校验未通过：弹出第一条错误，避免用户以为按钮没反应
+    const first = Object.values(fields || {}).flat().find(Boolean)
+    ElMessage.warning(first?.message || '请先完善表单信息')
+    return
   }
   resetting.value = true
   try {
     await resetPassword(forgotForm.email.trim(), forgotForm.emailCode.trim(), forgotForm.newPassword)
     forgotStep.value = 'done'
   } catch (e) {
-    /* 拦截器已提示 */
+    /* 拦截器已提示（验证码错误/已过期等） */
   } finally {
     resetting.value = false
   }
@@ -464,10 +480,16 @@ async function handleLogin() {
 }
 
 async function handleRegister() {
+  if (!registerCodeSent.value) {
+    ElMessage.warning('请先点击「获取验证码」，完成邮箱验证后再注册')
+    return
+  }
   try {
     await registerFormRef.value.validate()
-  } catch (e) {
-    return // 校验未通过
+  } catch (fields) {
+    const first = Object.values(fields || {}).flat().find(Boolean)
+    ElMessage.warning(first?.message || '请先完善表单信息')
+    return
   }
   loading.value = true
   try {
