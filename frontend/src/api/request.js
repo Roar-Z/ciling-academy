@@ -22,6 +22,17 @@ const service = axios.create({
   withCredentials: true
 })
 
+// 相同文案 3 秒内只弹一次：页面并发多个请求同时失败时，避免一串相同弹窗刷屏
+const lastShownAt = new Map()
+function showMessage(type, msg) {
+  const now = Date.now()
+  if (now - (lastShownAt.get(msg) || 0) < 3000) return
+  if (lastShownAt.size > 50) lastShownAt.clear()
+  lastShownAt.set(msg, now)
+  // grouping: 即使漏网（如跨页面瞬间连续弹出），Element Plus 也会把相同文案合并为一个
+  ElMessage({ type, message: msg, grouping: true })
+}
+
 // 请求拦截：携带 token + 把图形验证码 captchaId 通过 header 传递
 service.interceptors.request.use((config) => {
   const token = localStorage.getItem('ws_token')
@@ -82,7 +93,7 @@ service.interceptors.response.use(
     } else if (error.code === 'ECONNABORTED') {
       msg = '请求超时，请稍后再试'
     }
-    ElMessage.error(msg)
+    showMessage('error', msg)
     const err = new Error(msg)
     err.code = -1
     return Promise.reject(err)

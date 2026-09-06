@@ -31,7 +31,7 @@ copy application-local.yml.example application-local.yml
 mvn spring-boot:run
 ```
 
-默认 8080，API 响应开了 gzip 压缩。IDEA 里直接跑 `CilingAcademyApplication` 也一样。
+默认 8080，API 响应开了 gzip 压缩。IDEA 里直接跑 `WordSpiritApplication` 也一样。
 
 ## 配置项一览
 

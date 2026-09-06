@@ -83,6 +83,8 @@ export default defineConfig({
     // Element Plus 按需引入：el-* 组件与 ElMessage 等函数式 API 自动按需导入
     //（JS + 样式），无需手写 element-plus 的 import
     AutoImport({
+      // ElMessage 指向全局包装：相同文案 3 秒内只弹一次（样式由包装模块自行引入）
+      imports: [{ '@/utils/el-message': ['ElMessage'] }],
       resolvers: [elementPlusOnDemandResolver()],
       dts: false
     }),
@@ -126,6 +128,18 @@ export default defineConfig({
   server: {
     port: 5173,
     open: false,
+    // 空闲时预编译常用页面，避免 dev 模式下首次点击每个页面都要现场编译（转圈数秒）
+    warmup: {
+      clientFiles: [
+        '/src/views/home/index.vue',
+        '/src/views/login/index.vue',
+        '/src/views/task/index.vue',
+        '/src/views/study/review/index.vue',
+        '/src/views/ai-assistant/index.vue',
+        '/src/views/shop/index.vue',
+        '/src/views/profile/index.vue'
+      ]
+    },
     // 开发环境代理到后端 SpringBoot
     proxy: {
       '/api': {

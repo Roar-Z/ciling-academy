@@ -227,7 +227,8 @@ public class DictWordServiceImpl implements DictWordService {
         return new ArrayList<>(all.subList(0, count));
     }
 
-    private static final String STATS_KEY = "platform:stats:v3";
+    // v4：序列化配置调整后旧缓存格式不兼容，升版本号让旧键自然过期
+    private static final String STATS_KEY = "platform:stats:v4";
     private static final Duration STATS_TTL = Duration.ofMinutes(10);
 
     @Override

@@ -8,6 +8,21 @@
 说一下 AI 的定位：大模型只负责生成内容，复习调度、批改、计分这些核心逻辑全部是程序自己
 实现的。所以不配置 AI Key 也能正常用，只是少几个 AI 功能，不会整个系统瘫掉。
 
+## 项目预览
+
+| | |
+| --- | --- |
+| ![首页](docs/screenshots/home.png) | ![背单词复习](docs/screenshots/review.png) |
+| 首页 | 背单词复习 |
+| ![词灵AI](docs/screenshots/ai-chat.png) | ![任务中心](docs/screenshots/task.png) |
+| 词灵AI 答疑 | 任务中心 |
+| ![AI试卷](docs/screenshots/paper.png) | ![生词本](docs/screenshots/word-book.png) |
+| AI 试卷 | 生词本 |
+| ![趣味乐园](docs/screenshots/game.png) | ![金币商城](docs/screenshots/shop.png) |
+| 趣味乐园 | 金币商城 |
+| ![个人中心](docs/screenshots/profile.png) | |
+| 个人中心 | |
+
 ## 功能
 
 背单词部分：

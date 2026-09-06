@@ -504,7 +504,8 @@ function modeLabel(mode) {
 
 function formatTime(t) {
   if (!t) return ''
-  const d = new Date(t.replace(/-/g, '/'))
+  const d = new Date(String(t).replace(/-/g, '/'))
+  if (isNaN(d.getTime())) return ''
   const now = new Date()
   const sameDay = d.toDateString() === now.toDateString()
   const pad = (n) => String(n).padStart(2, '0')
