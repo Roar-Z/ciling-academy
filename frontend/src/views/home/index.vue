@@ -313,10 +313,16 @@
             </div>
             <p class="footer-slogan">AI 增强型英语单词学习平台<br />让每个单词都真正被记住</p>
             <div class="footer-social">
-              <a class="fs-btn" href="javascript:;" aria-label="GitHub">
+              <a
+                class="fs-btn"
+                href="https://github.com/Roar-Z/ciling-academy"
+                target="_blank"
+                rel="noopener"
+                aria-label="GitHub"
+              >
                 <AppIcon name="github" :size="16" />
               </a>
-              <a class="fs-btn" href="javascript:;" aria-label="邮箱">
+              <a class="fs-btn" href="javascript:;" aria-label="复制联系邮箱" @click="copyContactEmail">
                 <AppIcon name="mail" :size="16" />
               </a>
             </div>
@@ -353,6 +359,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { getPlatformStats } from '@/api/user'
 import { games } from '@/views/game-park/games'
@@ -360,6 +367,28 @@ import { useUserStore } from '@/store/user'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+/** 官方联系邮箱（页脚复制 / 「联系我们」页展示保持一致） */
+const CONTACT_EMAIL = 'ciling_academy@163.com'
+
+/** 复制联系邮箱到剪贴板 */
+const copyContactEmail = async () => {
+  try {
+    await navigator.clipboard.writeText(CONTACT_EMAIL)
+    ElMessage.success(`邮箱已复制：${CONTACT_EMAIL}`)
+  } catch {
+    // 剪贴板 API 不可用（非 https 或权限受限）时的降级
+    const ta = document.createElement('textarea')
+    ta.value = CONTACT_EMAIL
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    ElMessage.success(`邮箱已复制：${CONTACT_EMAIL}`)
+  }
+}
 
 const metrics = ref([
   { icon: 'book', num: 0, suffix: '个', label: '收录单词总数', target: 0, color: '#3D9A7E' },

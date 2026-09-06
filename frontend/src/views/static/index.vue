@@ -509,7 +509,7 @@ const PAGES = {
       },
       {
         h: '反馈邮箱',
-        ps: ['2175994007@qq.com']
+        ps: ['ciling_academy@163.com']
       },
       {
         h: '反馈建议',
