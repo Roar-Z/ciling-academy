@@ -60,7 +60,13 @@
           <el-tab-pane label="注册" name="register">
             <el-form :model="registerForm" :rules="registerRules" ref="registerFormRef" size="large" @keyup.enter="handleRegister">
               <el-form-item prop="email">
-                <el-input v-model="registerForm.email" placeholder="邮箱（用于接收验证码）" :prefix-icon="Message" />
+                <el-input
+                  v-model="registerForm.email"
+                  placeholder="邮箱（用于接收验证码）"
+                  maxlength="64"
+                  :prefix-icon="Message"
+                  @input="registerForm.email = sanitizeEmailInput($event)"
+                />
               </el-form-item>
               <el-form-item>
                 <div class="code-row">
@@ -123,9 +129,6 @@
 
           <!-- 步骤一：填写信息重置 -->
           <template v-if="forgotStep === 'form'">
-            <div class="fd-icon">
-              <el-icon :size="28"><Lock /></el-icon>
-            </div>
             <h3 class="fd-title">重置密码</h3>
             <p class="fd-desc">输入注册邮箱，我们将发送验证码帮你重置密码</p>
 
@@ -137,7 +140,13 @@
               @keyup.enter="handleResetPassword"
             >
               <el-form-item prop="email">
-                <el-input v-model="forgotForm.email" placeholder="注册邮箱" :prefix-icon="Message" />
+                <el-input
+                  v-model="forgotForm.email"
+                  placeholder="注册邮箱"
+                  maxlength="64"
+                  :prefix-icon="Message"
+                  @input="forgotForm.email = sanitizeEmailInput($event)"
+                />
               </el-form-item>
               <el-form-item prop="emailCode">
                 <div class="fd-code-row">
@@ -177,20 +186,23 @@
               <el-button type="primary" size="large" class="fd-submit" :loading="resetting" @click="handleResetPassword">
                 确认重置
               </el-button>
-              <p class="fd-back" @click="backToLogin">返回登录</p>
             </el-form>
+            <p class="fd-foot">
+              想起密码了？
+              <a href="javascript:;" @click="backToLogin">返回登录</a>
+            </p>
           </template>
 
           <!-- 步骤二：重置成功 -->
           <template v-else>
-            <div class="fd-icon fd-icon-success">
-              <el-icon :size="30"><CircleCheckFilled /></el-icon>
+            <div class="fd-success">
+              <el-icon :size="42" class="fs-check"><CircleCheckFilled /></el-icon>
+              <h3 class="fd-title fd-title-center">密码重置成功</h3>
+              <p class="fd-desc fd-desc-center">请使用新密码重新登录</p>
+              <el-button type="primary" size="large" class="fd-submit" @click="backToLogin">
+                去登录
+              </el-button>
             </div>
-            <h3 class="fd-title">密码重置成功</h3>
-            <p class="fd-desc">你的密码已更新，请使用新密码重新登录</p>
-            <el-button type="primary" size="large" class="fd-submit" @click="backToLogin">
-              去登录
-            </el-button>
           </template>
         </div>
       </div>
@@ -204,6 +216,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { CircleCheckFilled, Close, Key, Lock, Message, Postcard, User } from '@element-plus/icons-vue'
 import { resetPassword, sendRegisterEmailCode, sendResetPasswordEmailCode } from '@/api/user'
 import CaptchaModal from '@/components/common/CaptchaModal.vue'
+import { EMAIL_PATTERN as emailPattern, sanitizeEmailInput } from '@/utils/emailInput'
 import { useUserStore } from '@/store/user'
 
 const router = useRouter()
@@ -266,8 +279,6 @@ const registerCodeCountdown = ref(0)
 const verifying = ref(false)
 let registerCountdownTimer = null
 const captchaModalRef = ref()
-
-const emailPattern = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 
 const canSendRegisterCode = computed(
   () => emailPattern.test(registerForm.email) && registerCodeCountdown.value === 0
@@ -348,7 +359,7 @@ const forgotForm = reactive({
 const forgotRules = {
   email: [
     { required: true, message: '请输入注册邮箱', trigger: 'blur' },
-    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
   ],
   emailCode: [
     { required: true, message: '请输入邮箱验证码', trigger: 'blur' },
@@ -670,6 +681,24 @@ async function handleRegister() {
     margin-top: $sp-2;
   }
 
+  .login-aux {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -8px 0 16px;
+
+    .forgot-link {
+      font-size: $fs-base;
+      color: $text-caption;
+      cursor: pointer;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $color-primary;
+      }
+    }
+  }
+
   .code-row {
     display: flex;
     gap: $sp-2;
@@ -733,74 +762,58 @@ async function handleRegister() {
   align-items: center;
   justify-content: center;
   padding: $sp-5;
-  background: rgba(17, 24, 39, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .forgot-dialog {
-  width: 340px;
+  width: 360px;
   max-width: 100%;
   background: $bg-card;
-  border-radius: 20px;
-  padding: $sp-8 $sp-6 $sp-6;
+  border-radius: 12px;
+  padding: 24px;
   position: relative;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.16);
 
   .fd-close {
     position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 30px;
-    height: 30px;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
     border: none;
-    border-radius: 50%;
-    background: $gray-2;
+    border-radius: 6px;
+    background: transparent;
     color: $text-caption;
     cursor: pointer;
     @include flex-center;
     transition: background $transition-fast, color $transition-fast;
 
     &:hover {
-      background: $border-light;
+      background: $gray-2;
       color: $text-regular;
     }
   }
 
-  .fd-icon {
-    width: 58px;
-    height: 58px;
-    margin: 0 auto;
-    border-radius: 50%;
-    background: rgba(61, 154, 126, 0.12);
-    color: $color-primary;
-    @include flex-center;
-  }
-
-  .fd-icon-success {
-    background: rgba(82, 196, 26, 0.12);
-    color: #52c41a;
-    animation: fdPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
   .fd-title {
-    margin-top: $sp-4;
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 17px;
+    font-weight: 600;
     color: $text-title;
+    line-height: 1.4;
+    padding-right: 32px;
   }
 
   .fd-desc {
-    margin-top: $sp-1;
+    margin-top: 6px;
     margin-bottom: $sp-5;
-    font-size: $fs-sm;
+    font-size: 13px;
     color: $text-caption;
     line-height: 1.6;
   }
 
   :deep(.el-form-item) {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   .fd-code-row {
@@ -822,39 +835,62 @@ async function handleRegister() {
 
   .fd-submit {
     width: 100%;
-    height: 44px;
-    margin-top: $sp-2;
-    border-radius: 999px;
+    height: 42px;
+    margin-top: $sp-1;
     font-size: $fs-md;
   }
 
-  .fd-back {
+  .fd-foot {
     margin-top: $sp-4;
-    font-size: $fs-sm;
+    font-size: 13px;
     color: $text-caption;
-    cursor: pointer;
-    transition: color $transition-fast;
+    text-align: center;
 
-    &:hover {
+    a {
       color: $color-primary;
+      cursor: pointer;
+      transition: opacity $transition-fast;
+
+      &:hover {
+        opacity: 0.75;
+      }
+    }
+  }
+
+  .fd-success {
+    text-align: center;
+    padding: $sp-4 0 $sp-2;
+
+    .fs-check {
+      color: #52c41a;
+    }
+
+    .fd-title-center {
+      margin-top: $sp-3;
+      padding-right: 0;
+      text-align: center;
+    }
+
+    .fd-desc-center {
+      margin-bottom: $sp-4;
     }
   }
 }
 
 /* 弹窗入场/退场 */
 .forgot-pop-enter-active {
-  transition: opacity 0.25s ease;
-
-  .forgot-dialog {
-    animation: forgotSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-}
-
-.forgot-pop-leave-active {
   transition: opacity 0.2s ease;
 
   .forgot-dialog {
     transition: transform 0.2s ease;
+  }
+}
+
+.forgot-pop-leave-active {
+  transition: opacity 0.15s ease;
+
+  .forgot-dialog {
+    transition: transform 0.15s ease;
   }
 }
 
@@ -863,27 +899,7 @@ async function handleRegister() {
   opacity: 0;
 
   .forgot-dialog {
-    transform: scale(0.88);
-  }
-}
-
-@keyframes forgotSpring {
-  0% {
-    transform: scale(0.88) translateY(12px);
-  }
-  100% {
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes fdPop {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
+    transform: translateY(-8px);
   }
 }
 

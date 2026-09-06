@@ -311,7 +311,7 @@
             <div class="security-item">
               <div class="security-body">
                 <div class="security-title">
-                  QQ 邮箱
+                  邮箱
                   <el-tag v-if="userStore.userInfo?.email" size="small" type="success" effect="plain">已绑定</el-tag>
                   <el-tag v-else size="small" type="info" effect="plain">未绑定</el-tag>
                 </div>
@@ -489,7 +489,7 @@
     </el-dialog>
 
     <!-- 换绑邮箱 -->
-    <el-dialog v-model="emailVisible" :title="userStore.userInfo?.email ? '换绑 QQ 邮箱' : '绑定 QQ 邮箱'" width="420px">
+    <el-dialog v-model="emailVisible" :title="userStore.userInfo?.email ? '换绑邮箱' : '绑定邮箱'" width="420px">
       <el-form label-position="top">
         <el-form-item v-if="userStore.userInfo?.email" label="当前已绑定邮箱">
           <el-input v-model="userStore.userInfo.email" disabled>
@@ -524,7 +524,12 @@
           </p>
         </el-form-item>
         <el-form-item label="新邮箱">
-          <el-input v-model="emailForm.email" placeholder="例如：123456@qq.com" maxlength="100">
+          <el-input
+            v-model="emailForm.email"
+            placeholder="例如：123456@qq.com"
+            maxlength="64"
+            @input="emailForm.email = sanitizeEmailInput($event)"
+          >
             <template #prefix>
               <el-icon><Message /></el-icon>
             </template>
@@ -647,6 +652,7 @@ import { Lock, Message, Key, Loading } from '@element-plus/icons-vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { decoColor, decoSoftBg } from '@/utils/deco-colors'
 import CaptchaModal from '@/components/common/CaptchaModal.vue'
+import { sanitizeEmailInput, EMAIL_PATTERN } from '@/utils/emailInput'
 import { updateProfile, sendEmailCode, updateEmail, changePassword, uploadAvatar, saveDailyGoal, getLevelInfo, claimLevelReward, getAchievements } from '@/api/user'
 import { listWordBook, dueReview } from '@/api/wordBook'
 import { myGoods, equipGoods, shopItems, downloadResource } from '@/api/shop'
@@ -1162,7 +1168,7 @@ function sendEmailCodeClick() {
   }
   const hasOld = !!userStore.userInfo?.email
   const targetEmail = hasOld ? userStore.userInfo.email : emailForm.email.trim()
-  if (!targetEmail || !/^\S+@\S+\.\S+$/.test(targetEmail)) {
+  if (!targetEmail || !EMAIL_PATTERN.test(targetEmail)) {
     ElMessage.warning(hasOld ? '当前未绑定有效邮箱' : '请先输入新邮箱')
     return
   }
@@ -1220,7 +1226,7 @@ async function onCaptchaVerified({ captchaId }) {
 
 async function saveEmail() {
   const email = emailForm.email.trim()
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+  if (!email || !EMAIL_PATTERN.test(email)) {
     ElMessage.warning('请输入正确的邮箱地址')
     return
   }
