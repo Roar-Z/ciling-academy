@@ -58,9 +58,18 @@ function exitElementFullscreen() {
 }
 
 // 部分安卓浏览器（夸克/X5 WebView）退出全屏后布局视口停留在全屏时的横向宽度，
-// 页面内容挤在一侧、另一半黑屏；软重排手段对这些内核无效，
-// 只能检测残留并整页刷新强制重建视口
+// 页面内容挤在一侧、另一半黑屏；软重排手段对这些内核无效，只能整页刷新重建视口。
+// 这些内核的视口卡死是确定复现的，因此主动退出时直接刷新，
+// 一次正常加载闪烁后即为原始竖屏布局，避免先错乱几秒再恢复
+const BROKEN_VIEWPORT_UA =
+  typeof navigator !== 'undefined' && /Quark|MQQBrowser/i.test(navigator.userAgent)
+
+let lastRestoreAt = 0
 function restoreViewport() {
+  // 防重入：主动退出（exit 内直接调用）与 fullscreenchange 回调会连续触发两次
+  const now = Date.now()
+  if (now - lastRestoreAt < 1500) return
+  lastRestoreAt = now
   const html = document.documentElement
   const body = document.body
   // 1) 强制整树重排（同一任务内设置并还原，不会产生可见闪烁）
@@ -145,14 +154,24 @@ function enter() {
 
 function exit() {
   if (!immersive.value) return
+  const wasFullscreen = !!getFullscreenElement()
   immersive.value = false
   applyScrollLock(false)
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   document.removeEventListener('webkitfullscreenchange', onFullscreenChange)
   document.removeEventListener('keydown', onKeyDown)
-  // 不显式 unlock：规范规定退出全屏时浏览器自动释放方向锁定，
-  // 在全屏过渡中主动 unlock 反而可能诱发夸克/X5 视口旋转卡死
-  if (getFullscreenElement()) exitElementFullscreen()
+  if (wasFullscreen) {
+    exitElementFullscreen()
+    if (BROKEN_VIEWPORT_UA && isTouchDevice) {
+      // 夸克/X5：退出全屏视口必然卡死且软重排无效，立即整页刷新——
+      // 一次正常加载闪烁后即为原始竖屏布局（不等检测轮次、不出现错乱阶段）
+      setTimeout(() => window.location.reload(), 80)
+    } else {
+      // 其他浏览器：监听器已移除，fullscreenchange 不会再回调，
+      // 这里直接触发视口恢复兜底（仅在视口异常时才会刷新）
+      restoreViewport()
+    }
+  }
 }
 
 export function useImmersive() {
