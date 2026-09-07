@@ -1035,7 +1035,7 @@ function formatTime(t) {
     padding: 0;
 
     .fc-word {
-      font-size: clamp(34px, min(6vw, 12vh), 92px);
+      font-size: clamp(36px, min(6.5vw, 13vh), 104px);
       line-height: 1.08;
       word-break: break-word;
       max-width: 100%;
@@ -1060,8 +1060,8 @@ function formatTime(t) {
       border-radius: 999px;
     }
     .fc-phonetic {
-      font-size: clamp(15px, min(1.9vw, 3.4vh), 26px);
-      margin-top: $sp-2;
+      font-size: clamp(13px, min(1.5vw, 2.6vh), 20px);
+      margin-top: clamp(2px, 0.8vh, 8px);
     }
 
     .fc-detail {
@@ -1075,8 +1075,8 @@ function formatTime(t) {
       text-align: center;
     }
     .fc-divider {
-      width: 36px;
-      margin: 0 0 clamp(8px, 1.6vh, 14px);
+      width: 28px;
+      margin: 0 0 clamp(6px, 1.2vh, 10px);
     }
     /* 释义、例句刻意收小：沉浸模式视觉重心留给单词 */
     .fc-meaning {
@@ -1092,7 +1092,8 @@ function formatTime(t) {
       &.fc-example-empty { font-size: clamp(11px, min(1vw, 1.8vh), 14px); }
     }
     .fc-placeholder {
-      font-size: clamp(12px, min(1.2vw, 2.2vh), 16px);
+      font-size: clamp(11px, min(1vw, 1.8vh), 14px);
+      opacity: 0.75;
       color: $text-caption;
     }
   }
@@ -1136,8 +1137,9 @@ function formatTime(t) {
     .flash-card {
       padding: $sp-2 $sp-1;
 
-      .fc-word { font-size: clamp(30px, min(9vw, 10vh), 46px); }
-      .fc-phonetic { font-size: clamp(13px, min(2.4vw, 2.8vh), 16px); }
+      /* 视觉重心=单词：字号放大，音标/提示收小让位 */
+      .fc-word { font-size: clamp(34px, min(10vw, 12vh), 58px); }
+      .fc-phonetic { font-size: clamp(11px, min(1.7vw, 2vh), 13px); margin-top: 2px; }
 
       .fc-detail {
         position: static;
@@ -1156,7 +1158,7 @@ function formatTime(t) {
         .fc-example-cn { font-size: clamp(10px, min(1.4vw, 1.8vh), 12px); }
         &.fc-example-empty { font-size: clamp(10px, min(1.4vw, 1.8vh), 12px); }
       }
-      .fc-placeholder { font-size: clamp(12px, min(1.6vw, 2vh), 14px); }
+      .fc-placeholder { font-size: clamp(11px, min(1.3vw, 1.6vh), 13px); opacity: 0.75; }
     }
 
     /* 底部按钮带：三按钮等宽铺满，固定在卡片底部不与内容打架 */

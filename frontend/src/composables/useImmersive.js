@@ -58,7 +58,8 @@ function exitElementFullscreen() {
 }
 
 // 部分安卓浏览器（夸克/X5 WebView）退出全屏后布局视口停留在全屏时的横向宽度，
-// 页面内容挤在一侧、另一半黑屏；需要多重手段强制浏览器重算视口
+// 页面内容挤在一侧、另一半黑屏；软重排手段对这些内核无效，
+// 只能检测残留并整页刷新强制重建视口
 function restoreViewport() {
   const html = document.documentElement
   const body = document.body
@@ -71,15 +72,40 @@ function restoreViewport() {
   // 2) 通知依赖窗口尺寸的逻辑
   window.dispatchEvent(new Event('resize'))
   window.scrollTo(0, 0)
-  // 3) 重写 viewport meta 并延迟还原（部分内核延迟后才重算布局视口）
+  // 3) 重写并重新插入 viewport meta，强制内核重新解析视口配置
   const meta = document.querySelector('meta[name="viewport"]')
   if (meta) {
     const original = meta.getAttribute('content')
     meta.setAttribute('content', `${original}, minimum-scale=1`)
+    const parent = meta.parentNode
+    if (parent) {
+      parent.removeChild(meta)
+      parent.appendChild(meta)
+    }
     setTimeout(() => meta.setAttribute('content', original), 350)
   }
-  // 4) 部分内核视口回调晚于 fullscreenchange，延迟再补一次 resize
-  setTimeout(() => window.dispatchEvent(new Event('resize')), 400)
+  // 4) 最终兜底：触屏设备上若屏幕已回到竖屏而布局视口仍是横向（宽>高），
+  //    说明内核视口未恢复，延迟两次确认（避开系统旋转回摆的竞态）后整页刷新
+  if (!isTouchDevice) return
+  const isStuck = () => {
+    let angle = 0
+    try {
+      if (screen.orientation && typeof screen.orientation.angle === 'number') {
+        angle = screen.orientation.angle
+      }
+    } catch (e) {
+      /* 忽略 */
+    }
+    const portrait = angle === 0 || angle === 180
+    return portrait && window.innerWidth > window.innerHeight
+  }
+  setTimeout(() => {
+    if (isStuck()) {
+      setTimeout(() => {
+        if (isStuck()) location.reload()
+      }, 600)
+    }
+  }, 1000)
 }
 
 function onFullscreenChange() {

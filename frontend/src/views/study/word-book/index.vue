@@ -76,7 +76,7 @@
         </el-table-column>
         <el-table-column label="下次复习" width="105">
           <template #default="{ row }">
-            <span :class="{ 'is-overdue': isOverdue(row.nextReviewAt) }">{{ row.nextReviewAt || '—' }}</span>
+            <span :class="{ 'is-overdue': isOverdue(row.nextReviewAt) }">{{ formatTime(row.nextReviewAt) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="155" fixed="right" align="center">
@@ -256,6 +256,15 @@ function sourceType(s) {
 function isOverdue(date) {
   if (!date) return false
   return new Date(date) < new Date(new Date().toDateString())
+}
+
+// ISO 时间转本地展示格式：2026-09-08T16:32:21 → 2026-09-08 16:32
+function formatTime(date) {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return date
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 /** 把生词本里的解析要点JSON拼成一句话摘要：语法 / 搭配 / 近义 */

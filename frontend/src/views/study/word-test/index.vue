@@ -191,7 +191,7 @@
               <div v-if="w.userAnswer" class="wi-user">
                 你的作答：<span class="user-answer-text">{{ w.userAnswer }}</span>
               </div>
-              <div class="wi-next">下次复习：{{ w.nextReviewAt }}</div>
+              <div class="wi-next">下次复习：{{ formatTime(w.nextReviewAt) }}</div>
             </div>
           </div>
         </div>
