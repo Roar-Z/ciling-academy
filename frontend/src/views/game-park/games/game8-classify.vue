@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGame } from '@/composables/useGame'
 import { useGameProgress } from '@/composables/useGameProgress'
@@ -137,8 +137,20 @@ function onDragStart(e, w) {
 /* ---------- 移动端触摸拖拽（与 PC 端 HTML5 拖拽并存） ---------- */
 let touchGhost = null
 
+// 拖拽期间锁定页面滚动（部分手机浏览器不遵守 touch-action/preventDefault，直接锁 overflow 最稳）
+function lockPageScroll() {
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+}
+
+function unlockPageScroll() {
+  document.documentElement.style.overflow = ''
+  document.body.style.overflow = ''
+}
+
 function onTouchStart(e, w) {
   dragWord.value = w
+  lockPageScroll()
   const t = e.touches[0]
   touchGhost = document.createElement('div')
   touchGhost.className = 'drag-word touch-ghost'
@@ -166,6 +178,7 @@ function onTouchCancel() {
 }
 
 function cleanupTouch() {
+  unlockPageScroll()
   if (touchGhost) {
     touchGhost.remove()
     touchGhost = null
@@ -225,6 +238,11 @@ function restart() {
 function back() {
   router.push('/game-park')
 }
+
+// 兜底：拖拽中途退出页面时解锁滚动
+onBeforeUnmount(() => {
+  unlockPageScroll()
+})
 </script>
 
 <style lang="scss" scoped>
