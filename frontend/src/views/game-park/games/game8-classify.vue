@@ -136,16 +136,46 @@ function onDragStart(e, w) {
 
 /* ---------- 移动端触摸拖拽（与 PC 端 HTML5 拖拽并存） ---------- */
 let touchGhost = null
+let scrollLocked = false
+let savedScrollY = 0
 
-// 拖拽期间锁定页面滚动（部分手机浏览器不遵守 touch-action/preventDefault，直接锁 overflow 最稳）
+/**
+ * 拖拽期间彻底锁死页面滚动（双层保险）：
+ * 1) document 级非被动 touchmove 守卫：显式 { passive: false } 添加监听，
+ *    绕过部分手机内核（夸克/X5 等）对元素级监听的强制被动化——
+ *    它们会无视元素上的 touchmove preventDefault 与 touch-action，但尊重显式非被动监听；
+ * 2) body 定格 position:fixed + 负 top 补偿滚动位置：文档流脱离视口后物理上滚不动，
+ *    兜底 iOS Safari（overflow:hidden 对其无效）与一切无视 preventDefault 的内核。
+ */
+function preventScrollGuard(e) {
+  if (dragWord.value) e.preventDefault()
+}
+
 function lockPageScroll() {
+  if (scrollLocked) return
+  scrollLocked = true
+  savedScrollY = window.scrollY
   document.documentElement.style.overflow = 'hidden'
-  document.body.style.overflow = 'hidden'
+  document.body.style.position = 'fixed'
+  document.body.style.top = `${-savedScrollY}px`
+  document.body.style.left = '0'
+  document.body.style.right = '0'
+  document.body.style.width = '100%'
+  document.addEventListener('touchmove', preventScrollGuard, { passive: false })
 }
 
 function unlockPageScroll() {
+  if (!scrollLocked) return
+  scrollLocked = false
+  document.removeEventListener('touchmove', preventScrollGuard)
   document.documentElement.style.overflow = ''
-  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.top = ''
+  document.body.style.left = ''
+  document.body.style.right = ''
+  document.body.style.width = ''
+  // 先还原 overflow 再恢复滚动位置，瞬间回到拖拽前视野
+  window.scrollTo(0, savedScrollY)
 }
 
 function onTouchStart(e, w) {
