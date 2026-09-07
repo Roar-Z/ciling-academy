@@ -148,7 +148,7 @@ let savedScrollY = 0
  *    兜底 iOS Safari（overflow:hidden 对其无效）与一切无视 preventDefault 的内核。
  */
 function preventScrollGuard(e) {
-  if (dragWord.value) e.preventDefault()
+  if (scrollLocked) e.preventDefault()
 }
 
 function lockPageScroll() {
@@ -161,6 +161,10 @@ function lockPageScroll() {
   document.body.style.left = '0'
   document.body.style.right = '0'
   document.body.style.width = '100%'
+  // 合成器级禁滚：touch-action 由浏览器输入管线处理（不走 JS 监听），
+  // 即使内核强制被动化所有 touchmove，也不会再把触摸手势判定为视口平移
+  document.documentElement.style.touchAction = 'none'
+  document.body.style.touchAction = 'none'
   document.addEventListener('touchmove', preventScrollGuard, { passive: false })
 }
 
@@ -169,11 +173,13 @@ function unlockPageScroll() {
   scrollLocked = false
   document.removeEventListener('touchmove', preventScrollGuard)
   document.documentElement.style.overflow = ''
+  document.documentElement.style.touchAction = ''
   document.body.style.position = ''
   document.body.style.top = ''
   document.body.style.left = ''
   document.body.style.right = ''
   document.body.style.width = ''
+  document.body.style.touchAction = ''
   // 先还原 overflow 再恢复滚动位置，瞬间回到拖拽前视野
   window.scrollTo(0, savedScrollY)
 }
