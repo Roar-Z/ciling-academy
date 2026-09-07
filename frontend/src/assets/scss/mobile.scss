@@ -1,0 +1,56 @@
+// =============================================================
+// 词灵学园 移动端全局兜底样式
+// 所有规则全部嵌套在 .is-mobile 根类下（挂在 <html> 上，见 useDevice.js），
+// PC 端（.is-mobile 不存在）零影响。
+// =============================================================
+
+/* ---------- 根级：禁止横向滚动 + 触感基础 ---------- */
+html.is-mobile {
+  overflow-x: hidden;
+}
+
+.is-mobile body {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.is-mobile img,
+.is-mobile video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Element Plus 弹层移动端适配 ----------
+   el-dialog 宽度是内联 style，必须 !important 才能覆盖 */
+
+.is-mobile .el-dialog {
+  width: calc(100vw - 32px) !important;
+  max-width: calc(100vw - 32px) !important;
+  margin-top: 9vh !important;
+  border-radius: 16px;
+}
+
+.is-mobile .el-overlay-dialog {
+  overflow-x: hidden;
+}
+
+.is-mobile .el-message {
+  max-width: calc(100vw - 32px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.is-mobile .el-message-box {
+  width: calc(100vw - 48px);
+  max-width: calc(100vw - 48px);
+}
+
+/* el-select / el-date-picker 等弹层最大宽度兜底 */
+.is-mobile .el-popper {
+  max-width: calc(100vw - 16px);
+}
+
+/* ---------- 安全区工具类（页面内自定义 fixed 元素用） ---------- */
+.is-mobile .ws-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

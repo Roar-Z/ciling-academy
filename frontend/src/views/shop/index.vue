@@ -1240,4 +1240,69 @@ async function downloadPdf(g) {
     height: 240px;
   }
 }
+
+/* ============ 移动端窄屏适配（≤768px） ============ */
+@media (max-width: 768px) {
+  /* 页面容器 padding 收紧（勿在此加 overflow-x: hidden，会破坏页头 sticky 吸顶） */
+  .shop-page {
+    padding-left: $sp-3;
+    padding-right: $sp-3;
+  }
+
+  /* 金币余额栏（页头整体）sticky 吸顶：顶栏高 52px / z-index 100，用 52px 与更低层级 */
+  .page-header {
+    position: sticky;
+    top: 52px;
+    z-index: 90;
+    background: $bg-page;
+  }
+
+  /* 分类筛选 tab：横向滑动不换行，隐藏滚动条 */
+  .subcat-bar {
+    display: flex;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .subcat-tab {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+  }
+
+  /* 商品卡保持 2 列（700px 断点已处理），padding 收紧；min-width 防网格撑爆 */
+  .goods-card {
+    padding: $sp-4 $sp-3;
+    min-width: 0;
+  }
+
+  /* 兑换按钮全宽 */
+  .goods-foot {
+    flex-wrap: wrap;
+
+    .el-button {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  .resource-card .res-foot {
+    flex-wrap: wrap;
+
+    .el-button {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  /* 空态/占位卡 padding 降级 */
+  .coming-soon {
+    padding: $sp-10 $sp-4;
+  }
+}
 </style>

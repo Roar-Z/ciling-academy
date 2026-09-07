@@ -1795,4 +1795,63 @@ function formatTime(t) {
     padding: 0 $sp-3;
   }
 }
+
+/* ========== 移动端窄屏适配（<= 768px） ========== */
+@media (max-width: 768px) {
+  /* 页面容器 padding 收紧为 12px */
+  .review-page {
+    padding-left: $sp-3;
+    padding-right: $sp-3;
+  }
+
+  /* 双栏改单列；侧栏卡片纵向自然排列 */
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+  .col-left {
+    position: static;
+    flex-direction: column;
+    .side-card { flex: none; }
+  }
+
+  /* 非沉浸模式：单词卡 + 操作按钮的窄屏布局
+     （沉浸模式有独立的绝对定位卡片布局，保持原样不干预） */
+  .review-page:not(.is-immersive) {
+    /* 为底部操作按钮预留 iOS 安全区，避免被手势条遮挡 */
+    padding-bottom: calc(#{$sp-3} + env(safe-area-inset-bottom, 0px));
+
+    .review-card {
+      padding: $sp-3 $sp-3 $sp-4;
+    }
+
+    /* 单词主字号自适应，长单词断行防溢出 */
+    .flash-card {
+      .fc-word {
+        font-size: clamp(28px, 8vw, 40px);
+        word-break: break-word;
+        max-width: 100%;
+      }
+      .fc-example { max-width: 100%; }
+    }
+
+    /* 操作按钮：全宽纵向排列 */
+    .card-actions {
+      flex-direction: column;
+      align-items: stretch;
+      gap: $sp-2;
+    }
+    .act-btn {
+      width: 100%;
+      min-width: 0;
+    }
+    .act-btn.act-btn-primary { min-height: 44px; }
+  }
+
+  /* 完成态按钮行防溢出 */
+  .sf-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: $sp-2;
+  }
+}
 </style>

@@ -6,7 +6,7 @@
 export const routes = [
   {
     path: '/',
-    component: () => import('@/components/layout/MainLayout.vue'),
+    component: () => import('@/components/layout/LayoutBridge.vue'),
     children: [
       {
         path: '',

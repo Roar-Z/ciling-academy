@@ -2860,6 +2860,65 @@ function startCountdown(type) {
     padding: 8px 6px;
   }
 }
+
+/* ============ 移动端窄屏适配（≤768px） ============ */
+@media (max-width: 768px) {
+  /* 页面容器 padding 收紧 + 防横向溢出兜底 */
+  .profile-page {
+    padding-left: $sp-3;
+    padding-right: $sp-3;
+    overflow-x: hidden;
+  }
+
+  /* 顶部用户信息区：纵向居中排列 */
+  .hero-top {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-id {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-name-row {
+    justify-content: center;
+  }
+
+  .hero-greet {
+    overflow-wrap: anywhere;
+  }
+
+  /* stats 统计：2×2 网格 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-cell:nth-child(2n) {
+    border-right: none;
+  }
+
+  .stat-cell:nth-child(n+3) {
+    border-top: 1px solid $border-light;
+  }
+
+  /* 菜单/列表行：48px 最小触控高度 */
+  .ql-item,
+  .res-item,
+  .badge-item,
+  .security-item {
+    min-height: 48px;
+  }
+
+  /* 弹窗宽度由全局 mobile.scss 兜底，这里只防弹窗内容横向溢出 */
+  .lv-wrap {
+    max-width: 100%;
+  }
+
+  .lv-rule-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 </style>
 
 <!-- 等级徽章 hover 提示：popper 挂载在 body 下，需非 scoped 样式 -->

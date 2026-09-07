@@ -1279,4 +1279,48 @@ onUnmounted(() => {
   .ms-side-title { width: 100%; }
   .ms-side-item { flex: 1 1 calc(50% - 4px); }
 }
+
+/* ========== 移动端窄屏适配（<= 768px） ========== */
+@media (max-width: 768px) {
+  /* 页面容器左右 padding 降为 12px */
+  .task-page {
+    padding-left: $sp-3;
+    padding-right: $sp-3;
+  }
+
+  /* 主布局双栏改单列，侧栏卡片自然纵排 */
+  .task-grid {
+    grid-template-columns: 1fr;
+    gap: $sp-3;
+  }
+
+  /* 4 列奖励券网格改 2×2 */
+  .act-rewards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $sp-2;
+  }
+
+  /* 月历：格子缩小但保持 7 列 */
+  .cal-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .cal-cell {
+    height: 26px;
+    .cal-inner { width: 24px; height: 24px; }
+    .cal-num { font-size: $fs-xs; }
+  }
+  .cal-hcell { height: 16px; }
+
+  /* 签到头允许换行，避免固定宽度按钮在 375px 下溢出 */
+  .ck-head {
+    flex-wrap: wrap;
+    .ck-btn { min-height: 44px; }
+  }
+
+  /* 操作按钮最小高度 44px（触控友好） */
+  .ms-sidebar .ms-side-item { min-height: 44px; }
+  .ar-item .ar-btn { min-height: 44px; }
+  .tl-row .tl-go { min-height: 44px; }
+}
 </style>

@@ -29,7 +29,9 @@ for (const f of files) {
 function nameSet(full) {
   const set = new Set(Object.keys(full.icons))
   for (const [a, t] of Object.entries(full.aliases || {})) {
-    if (typeof t === 'string' && set.has(t)) set.add(a)
+    // 新版 @iconify/json 的别名值是对象 { parent: "..." }，旧版是字符串，两种都要兼容
+    const parent = typeof t === 'string' ? t : t?.parent
+    if (parent && set.has(parent)) set.add(a)
   }
   return set
 }
@@ -48,7 +50,11 @@ function buildCollection(prefix, full, names) {
   const aliases = {}
   for (const n of new Set(names)) {
     if (full.icons[n]) icons[n] = full.icons[n]
-    else if (typeof full.aliases?.[n] === 'string' && full.icons[full.aliases[n]]) aliases[n] = full.aliases[n]
+    else {
+      const raw = full.aliases?.[n]
+      const parent = typeof raw === 'string' ? raw : raw?.parent
+      if (parent && full.icons[parent]) aliases[n] = parent
+    }
   }
   // 别名目标也要带上
   for (const t of Object.values(aliases)) if (!icons[t] && full.icons[t]) icons[t] = full.icons[t]

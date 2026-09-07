@@ -1131,4 +1131,59 @@ function go(path) {
   .answer-row { flex-direction: column; }
   .submit-btn { padding: 12px 24px; }
 }
+
+/* ============ 移动端窄屏适配（≤768px） ============ */
+@media (max-width: 768px) {
+  /* 页面容器 padding 收紧为 12px */
+  .word-test-page { padding: $sp-3 $sp-3 $sp-10; }
+
+  /* 顶部信息条收紧 */
+  .wt-header { gap: $sp-3; padding: $sp-2 $sp-3; }
+
+  /* 题目卡片 padding 收紧 */
+  .mode-card { padding: $sp-6 $sp-3; }
+
+  /* 题目文字字号适当提升，保证 375px 下可读性 */
+  .mode-tag { font-size: $fs-sm; }
+  .match-btn { font-size: $fs-lg; }
+
+  /* 输入框撑满且 ≥16px（避免 iOS 聚焦缩放），不溢出容器 */
+  .spell-input,
+  .sentence-input {
+    width: 100%;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  /* matching：两列布局保持，但按钮触控区最小 48px，长词安全换行 */
+  .match-grid { gap: $sp-3; }
+  .match-btn {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    word-break: break-word;
+  }
+
+  /* 结果页收紧；4 个操作按钮排成 2×2 网格 */
+  .result-card { padding: $sp-6 $sp-3; }
+  .result-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $sp-2;
+    .el-button {
+      width: 100%;
+      min-height: 44px;
+      margin-left: 0;
+    }
+  }
+
+  /* 长单词/长句换行兜底 */
+  .prompt-meaning,
+  .prompt-en,
+  .feedback,
+  .wi-word,
+  .wi-meaning,
+  .wi-user { word-break: break-word; }
+  .wrong-item { padding: $sp-3; }
+}
 </style>

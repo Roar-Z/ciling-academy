@@ -126,4 +126,37 @@ const currentGame = computed(() => {
     padding: $sp-4;
   }
 }
+
+/* ============ 移动端窄屏适配（≤768px） ============ */
+@media (max-width: 768px) {
+  /* 页面容器 padding 收紧（$safe-padding 22px → 12px） */
+  .game-play-page {
+    padding: $sp-3 $sp-3 $sp-10;
+  }
+
+  .gp-topbar {
+    max-width: 100%;
+    gap: $sp-2;
+
+    /* 返回按钮触控区最小 40×40 */
+    .back-btn {
+      min-width: 40px;
+      min-height: 40px;
+      padding: 8px $sp-3;
+    }
+
+    /* 标题字号降为 $fs-xl，防长名溢出 */
+    .gp-title {
+      font-size: $fs-xl;
+      word-break: break-word;
+    }
+  }
+
+  /* 游戏体：min-height 500px → 380px，padding 收紧，防横向溢出 */
+  .game-body {
+    max-width: 100%;
+    min-height: 380px;
+    padding: $sp-3;
+  }
+}
 </style>

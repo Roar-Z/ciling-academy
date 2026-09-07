@@ -1799,4 +1799,187 @@ function go(path) {
     gap: 28px 20px;
   }
 }
+
+/* ============ Mobile ≤768px：单列堆叠 + 居中（国内主流窄屏布局） ============ */
+@media (max-width: 768px) {
+  /* 横向溢出兜底：绝对定位装饰卡/长词/固定宽度元素不撑破视口 */
+  .home-page {
+    overflow-x: hidden;
+  }
+
+  /* Hero：双栏改单列，文案在前 visual 在后（DOM 顺序即文案在前） */
+  .hero {
+    grid-template-columns: 1fr;
+    gap: $sp-6;
+    padding: $sp-8 $safe-padding $sp-6;
+  }
+
+  .hero-title {
+    font-size: clamp(24px, 7vw, 32px);
+    line-height: 1.3;
+  }
+
+  .hero-desc {
+    max-width: 100%;
+    font-size: $fs-md;
+  }
+
+  /* 主 CTA：纵向全宽 + ≥44px 触控热区 */
+  .hero-actions {
+    flex-direction: column;
+
+    .el-button {
+      width: 100%;
+      min-height: 44px;
+      margin-left: 0;
+    }
+  }
+
+  .hero-meta {
+    gap: $sp-2 $sp-4;
+  }
+
+  /* 产品示意卡窄屏整体等比缩放显示（内容真实范围 x:-46~460，中点 207px，
+     margin-left 用 calc(50% - 207px*s) 让视觉中心对齐容器中线） */
+  .hero-art {
+    display: block;
+    height: 292px;
+    max-width: 100%;
+    margin-left: calc(50% - 207px * 0.68);
+    transform: scale(0.68);
+    transform-origin: top left;
+  }
+
+  /* 中屏（481-768）：容器更宽，用更大的缩放比例 */
+  @media (min-width: 481px) {
+    .hero-art {
+      height: 366px;
+      margin-left: calc(50% - 207px * 0.85);
+      transform: scale(0.85);
+    }
+  }
+
+  /* 数据指标：4 列 → 2×2 */
+  .metrics {
+    padding: 0 $safe-padding;
+  }
+
+  .metrics-inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $sp-5 0;
+    padding: $sp-5 0;
+  }
+
+  .metric {
+    padding: 0 $sp-2;
+
+    .m-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: $radius-card;
+    }
+
+    .m-num {
+      font-size: $fs-5xl;
+    }
+  }
+
+  /* Section 上下留白收紧：$sp-10/$sp-12 级别 → $sp-8 */
+  .section {
+    margin: $sp-8 auto 0;
+  }
+
+  .section-head {
+    margin-bottom: $sp-6;
+
+    .section-title {
+      font-size: $fs-4xl;
+    }
+  }
+
+  /* 特性网格：3 列 → 单列 */
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: $sp-3;
+  }
+
+  .feature-card {
+    padding: $sp-5;
+
+    .fc-desc {
+      min-height: 0;
+    }
+  }
+
+  /* 双栏展示 → 单列 */
+  .showcase {
+    gap: $sp-8;
+    margin-top: $sp-8;
+  }
+
+  .showcase-row {
+    grid-template-columns: 1fr;
+    gap: $sp-5;
+
+    &.reverse .sc-visual {
+      order: 0;
+    }
+  }
+
+  .sc-title {
+    font-size: $fs-4xl;
+  }
+
+  .compare-card .cmp-col {
+    padding: $sp-5 $sp-4 $sp-4;
+  }
+
+  /* CTA 收尾 */
+  .cta {
+    margin: $sp-8 auto $sp-6;
+  }
+
+  .cta-title {
+    font-size: $fs-4xl;
+  }
+
+  .cta-btn {
+    width: 100%;
+    min-height: 44px;
+    margin-top: $sp-5;
+  }
+
+  /* Footer：分组纵向堆叠、居中 */
+  .site-footer {
+    margin-top: $sp-8;
+  }
+
+  .footer-inner {
+    padding: $sp-8 $safe-padding $sp-5;
+  }
+
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: $sp-6;
+    padding-bottom: $sp-6;
+    text-align: center;
+  }
+
+  .footer-social {
+    justify-content: center;
+  }
+
+  .footer-cols {
+    grid-template-columns: 1fr;
+    gap: $sp-5;
+  }
+
+  .footer-bottom {
+    justify-content: center;
+  }
+
+  .fb-spacer {
+    display: none;
+  }
+}
 </style>

@@ -940,4 +940,67 @@ async function handleRegister() {
     padding: $sp-6 $sp-5;
   }
 }
+
+/* ============ Mobile ≤768px：单列卡片 + 全宽触控 ============ */
+@media (max-width: 768px) {
+  .login-page {
+    padding: $sp-6 $sp-3 $sp-10;
+  }
+
+  /* 卡片：宽度吃满视口（留 12px 安全边距），保持圆角；窄屏不强制最小高度 */
+  .login-card {
+    width: calc(100vw - 24px);
+    max-width: 440px;
+    border-radius: $radius-large;
+    min-height: auto;
+
+    &.is-login-mode {
+      min-height: auto;
+    }
+  }
+
+  .login-form {
+    padding: $sp-6 $sp-4 $sp-5;
+
+    /* 标题降级 */
+    .lf-title {
+      font-size: $fs-3xl;
+    }
+
+    .lf-desc {
+      font-size: $fs-md;
+    }
+
+    /* 表单输入框 100% 宽 */
+    .el-input {
+      width: 100%;
+    }
+
+    /* 提交按钮 ≥44px 触控热区 */
+    .submit-btn {
+      height: 44px;
+    }
+
+    /* 验证码行：纵向排列，输入框与按钮全宽 */
+    .code-row {
+      flex-direction: column;
+      gap: $sp-2;
+
+      .el-input {
+        width: 100%;
+        flex: none;
+      }
+
+      .el-button {
+        width: 100%;
+        height: 44px;
+      }
+    }
+  }
+
+  /* 底部切换链接居中 */
+  .login-foot {
+    text-align: center;
+  }
+}
 </style>
