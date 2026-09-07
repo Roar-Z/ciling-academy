@@ -111,13 +111,21 @@
             <span class="tb-sep"></span>
             <span class="tb-label">等级</span>
             <div class="tb-tabs">
-              <button
+              <el-tooltip
                 v-for="opt in levelOptions"
                 :key="opt.value"
-                class="tb-tab"
-                :class="{ active: level === opt.value }"
-                @click="setLevel(opt.value)"
-              >{{ opt.label }}</button>
+                :content="opt.tip"
+                :disabled="!opt.tip"
+                :show-after="120"
+                placement="bottom"
+                effect="dark"
+              >
+                <button
+                  class="tb-tab"
+                  :class="{ active: level === opt.value }"
+                  @click="setLevel(opt.value)"
+                >{{ opt.label }}</button>
+              </el-tooltip>
             </div>
           </div>
           <div class="tb-group">
@@ -363,7 +371,7 @@ const levelOptions = [
   { label: '六级', value: 'cet6' },
   { label: '高考', value: 'gaokao' },
   { label: '中考', value: 'zhongkao' },
-  { label: '混合', value: 'mixed' }
+  { label: '混合', value: 'mixed', tip: '四六级词汇混合' }
 ]
 const level = ref('cet4')
 
