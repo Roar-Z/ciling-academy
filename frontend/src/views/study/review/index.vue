@@ -262,6 +262,46 @@
       </div>
     </transition>
 
+    <!-- 沉浸模式：左上角弱化信息条（学习统计 + 快捷入口，半透明玻璃胶囊不抢视野） -->
+    <transition name="fade">
+      <div v-if="immersive" class="immersive-topbar">
+        <div class="it-stats">
+          <span class="it-stat">掌握 <b>{{ totalWords }}</b></span>
+          <span class="it-sep"></span>
+          <span class="it-stat">待复习 <b>{{ dueCount }}</b></span>
+          <span class="it-sep it-sep-rate"></span>
+          <span class="it-stat it-stat-rate">掌握率 <b>{{ roundPercent }}%</b></span>
+        </div>
+        <span class="it-actions-sep"></span>
+        <div class="it-actions">
+          <button class="it-btn" title="巩固测验" :disabled="todayWords < dailyGoal" @click="openTestDialog">
+            <AppIcon name="check-circle" :size="15" />
+          </button>
+          <button class="it-btn" title="生词本" @click="immersiveGo('/word-book')">
+            <AppIcon name="book-open" :size="15" />
+          </button>
+          <button class="it-btn" title="词灵 AI" @click="immersiveGo('/ai-assistant')">
+            <AppIcon name="sparkles" :size="15" />
+          </button>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 沉浸模式：窄屏右侧快捷入口竖排（挂在退出按钮下方，桌面隐藏） -->
+    <transition name="fade">
+      <div v-if="immersive" class="immersive-rail">
+        <button class="it-btn" title="巩固测验" :disabled="todayWords < dailyGoal" @click="openTestDialog">
+          <AppIcon name="check-circle" :size="16" />
+        </button>
+        <button class="it-btn" title="生词本" @click="immersiveGo('/word-book')">
+          <AppIcon name="book-open" :size="16" />
+        </button>
+        <button class="it-btn" title="词灵 AI" @click="immersiveGo('/ai-assistant')">
+          <AppIcon name="sparkles" :size="16" />
+        </button>
+      </div>
+    </transition>
+
     <!-- 巩固测验弹窗：先选学习轮次，再选测试模式 -->
     <el-dialog
       v-model="testDialogVisible"
@@ -336,7 +376,7 @@ import { dueReview, reviewWord, addWord, markMastered } from '@/api/wordBook'
 import { dictRandom, recordStudy, saveReviewBatchSize, getInfo } from '@/api/user'
 import { finishLearnRound, getLearnRoundHistory, deleteLearnRound } from '@/api/learnRound'
 import { useUserStore } from '@/store/user'
-import { useImmersive } from '@/composables/useImmersive'
+import { useImmersive, isTouchDevice } from '@/composables/useImmersive'
 import AppIcon from '@/components/common/AppIcon.vue'
 
 const router = useRouter()
@@ -352,11 +392,19 @@ async function onEnterImmersive() {
   // 全屏被拒绝（仅页面内沉浸）时才弹我们自己的提示，告知退出方式
   if (!fullscreenOk) {
     ElMessage.info({
-      message: '已进入沉浸模式：按 ESC 或点击右上角「退出沉浸」即可退出',
+      message: isTouchDevice
+        ? '已进入沉浸模式：点击右上角「退出沉浸」即可退出'
+        : '已进入沉浸模式：按 ESC 或点击右上角「退出沉浸」即可退出',
       duration: 3000,
       placement: 'bottom'
     })
   }
+}
+
+// 沉浸模式下的快捷入口跳转：先退出沉浸恢复导航栏，再跳转
+function immersiveGo(path) {
+  exitImmersive()
+  go(path)
 }
 
 // 支持 ?mode=new 入口（首页"开始单词学习"直达新词学习）
@@ -918,10 +966,11 @@ function formatTime(t) {
 
   /* 卡片锁定 16:9 横版比例：宽度同时受视口宽/高约束，
      保证任何屏幕（含手机横屏）都完整可见且比例恒定，
-     新词学习 / 今日复习 / 空态 / 完成态大小完全一致，长单词不会使其变形 */
+     新词学习 / 今日复习 / 空态 / 完成态大小完全一致，长单词不会使其变形；
+     高度预留 120px 给顶部信息条与退出按钮，避免短窗口下与其重叠 */
   .review-card {
     position: relative;
-    width: min(1400px, 94vw, calc((100vh - 64px) * 16 / 9));
+    width: min(1400px, 94vw, calc((100vh - 120px) * 16 / 9));
     height: auto;
     min-height: 0;
     aspect-ratio: 16 / 9;
@@ -1055,6 +1104,81 @@ function formatTime(t) {
   /* 矮视口（手机横屏）：底部提示 toast 让位给操作按钮 */
   @media (max-height: 560px) {
     .card-hint { display: none; }
+  }
+
+  /* ---------- 窄屏 / 矮视口沉浸布局重构 ----------
+     桌面那套「释义区绝对定位到卡片下部」在矮卡片内必然与单词/音标重叠，
+     窄屏（竖屏手机）与矮视口（手机横屏、小窗口）改为文档流布局：
+     单词 + 释义整体居中，从根源上消除重叠 */
+  @media (max-width: 768px), (max-height: 560px) {
+    .review-card {
+      width: min(960px, 100%);
+      aspect-ratio: auto;
+      height: auto;
+      min-height: 0;
+      padding: 56px $sp-4 76px;
+    }
+
+    /* 进度行贴卡片顶部；新词提示让位（按钮本身已带 不记得/模糊/认识 语义） */
+    .card-progress {
+      top: 12px;
+      left: $sp-3;
+      right: $sp-3;
+    }
+    .review-hint { display: none; }
+
+    /* 释义区回归文档流，跟随单词整体居中 */
+    .flash-card {
+      padding: $sp-2 $sp-1;
+
+      .fc-word { font-size: clamp(30px, min(9vw, 10vh), 46px); }
+      .fc-phonetic { font-size: clamp(13px, min(2.4vw, 2.8vh), 16px); }
+
+      .fc-detail {
+        position: static;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        margin-top: clamp(8px, 1.6vh, 14px);
+        max-width: 100%;
+      }
+      .fc-divider { margin: 0 0 clamp(6px, 1.2vh, 10px); }
+      .fc-meaning { font-size: clamp(14px, min(2vw, 2.6vh), 17px); }
+      .fc-example {
+        margin-top: clamp(4px, 1vh, 8px);
+        max-width: 100%;
+        .fc-example-en { font-size: clamp(11px, min(1.6vw, 2vh), 13px); }
+        .fc-example-cn { font-size: clamp(10px, min(1.4vw, 1.8vh), 12px); }
+        &.fc-example-empty { font-size: clamp(10px, min(1.4vw, 1.8vh), 12px); }
+      }
+      .fc-placeholder { font-size: clamp(12px, min(1.6vw, 2vh), 14px); }
+    }
+
+    /* 底部按钮带：三按钮等宽铺满，固定在卡片底部不与内容打架 */
+    .card-actions {
+      bottom: 14px;
+      left: $sp-2;
+      right: $sp-2;
+      gap: $sp-2;
+
+      .act-btn {
+        flex: 1;
+        min-width: 0;
+        height: 44px;
+        font-size: 14px;
+        padding: 0 $sp-2;
+      }
+    }
+    .card-hint { bottom: 64px; }
+  }
+
+  /* 竖屏手机（高度充裕）：卡片改用可用高度，16:9 横版锁定在竖屏上只是一张小邮票 */
+  @media (max-width: 768px) and (min-height: 561px) {
+    .review-card {
+      min-height: min(58vh, 620px);
+    }
+    /* 右侧竖排快捷入口让出进度行「剩余 N 个」的位置 */
+    .card-progress { right: 64px; }
   }
 }
 
@@ -1344,6 +1468,123 @@ function formatTime(t) {
     border: 1px solid rgba(255, 255, 255, 0.35);
     font-size: 11px;
     line-height: 1.5;
+  }
+}
+
+/* 沉浸模式：左上角弱化信息条（与退出按钮同风格的半透明玻璃胶囊） */
+.immersive-topbar {
+  position: fixed;
+  top: 16px;
+  left: 20px;
+  z-index: 2000;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px 5px 14px;
+  border-radius: $radius-pill;
+  background: rgba(30, 30, 30, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  white-space: nowrap;
+  user-select: none;
+
+  .it-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .it-stat b {
+    margin-left: 2px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .it-sep {
+    width: 1px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .it-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+/* 快捷入口圆形按钮（顶部信息条内 + 窄屏竖排共用） */
+.it-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: background $transition-fast, color $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.26);
+    color: #fff;
+  }
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+/* 沉浸模式：窄屏右侧竖排快捷入口（桌面隐藏） */
+.immersive-rail {
+  display: none;
+  position: fixed;
+  top: 64px;
+  right: 12px;
+  z-index: 2000;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 22px;
+  background: rgba(30, 30, 30, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  .it-btn {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* 触屏设备没有 ESC 键：退出按钮隐藏 ESC 角标 */
+@media (hover: none) and (pointer: coarse) {
+  .immersive-exit .ie-key { display: none; }
+}
+
+@media (max-width: 768px) {
+  .immersive-topbar {
+    top: 10px;
+    left: 12px;
+    padding: 4px 10px;
+    font-size: 11px;
+
+    /* 窄屏只保留两个统计数字，快捷入口移到右侧竖排，避免与退出按钮挤在一行 */
+    .it-actions,
+    .it-actions-sep,
+    .it-stat-rate,
+    .it-sep-rate { display: none; }
+    .it-stats { gap: 8px; }
+  }
+  .immersive-rail {
+    display: flex;
+    top: 54px;
+    right: 10px;
+  }
+  .immersive-exit {
+    top: 10px;
+    right: 10px;
+    padding: 7px 12px;
   }
 }
 
