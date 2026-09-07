@@ -23,14 +23,12 @@ CREATE TABLE `learn_round_item` (
 ) ENGINE=InnoDB COMMENT='学习轮次-单词明细';
 
 -- ---------------------------------------------------------------
--- 若表已存在（先于本补丁建库），增量补充 4 列（MySQL 8 不支持 IF NOT EXISTS，
--- 重复执行前请确认；列已存在会报错可忽略）
+-- 存量库增量补充 4 列（幂等：仅当 phonetic 列不存在时执行；
+-- 全新库 CREATE 已含列，自动跳过）
 -- ---------------------------------------------------------------
-ALTER TABLE `learn_round_item`
-  ADD COLUMN `phonetic`   VARCHAR(128) DEFAULT NULL COMMENT '音标'      AFTER `word_id`,
-  ADD COLUMN `meaning`    VARCHAR(512) DEFAULT NULL COMMENT '释义'      AFTER `phonetic`,
-  ADD COLUMN `example`    VARCHAR(512) DEFAULT NULL COMMENT '英文例句'  AFTER `meaning`,
-  ADD COLUMN `example_cn` VARCHAR(512) DEFAULT NULL COMMENT '例句中文'  AFTER `example`;
+SET @has_phonetic = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'learn_round_item' AND COLUMN_NAME = 'phonetic');
+SET @sql_learn_round = IF(@has_phonetic = 0, 'ALTER TABLE `learn_round_item` ADD COLUMN `phonetic` VARCHAR(128) DEFAULT NULL COMMENT ''音标'' AFTER `word_id`, ADD COLUMN `meaning` VARCHAR(512) DEFAULT NULL COMMENT ''释义'' AFTER `phonetic`, ADD COLUMN `example` VARCHAR(512) DEFAULT NULL COMMENT ''英文例句'' AFTER `meaning`, ADD COLUMN `example_cn` VARCHAR(512) DEFAULT NULL COMMENT ''例句中文'' AFTER `example`', 'SELECT 1');
+PREPARE stmt FROM @sql_learn_round; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 DROP TABLE IF EXISTS `learn_round`;
 CREATE TABLE `learn_round` (

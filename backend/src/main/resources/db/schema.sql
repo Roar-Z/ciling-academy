@@ -452,11 +452,11 @@ CREATE TABLE `user_daily_task` (
 ) ENGINE=InnoDB COMMENT='用户每日任务';
 
 -- ----------------------------
--- 升级补丁：sys_user 增加通知偏好字段（对存量数据库执行）
+-- 升级补丁：sys_user 增加通知偏好字段（幂等：仅当列不存在时添加）
 -- ----------------------------
-ALTER TABLE `sys_user`
-  ADD COLUMN `notify_review` TINYINT NOT NULL DEFAULT 1 COMMENT '是否开启今日复习提醒通知（1=开 0=关）',
-  ADD COLUMN `notify_quota`  TINYINT NOT NULL DEFAULT 1 COMMENT '是否开启AI额度提醒通知（1=开 0=关）';
+SET @has_notify = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_user' AND COLUMN_NAME = 'notify_review');
+SET @sql_notify = IF(@has_notify = 0, 'ALTER TABLE `sys_user` ADD COLUMN `notify_review` TINYINT NOT NULL DEFAULT 1 COMMENT ''是否开启今日复习提醒通知（1=开 0=关）'', ADD COLUMN `notify_quota` TINYINT NOT NULL DEFAULT 1 COMMENT ''是否开启AI额度提醒通知（1=开 0=关）''', 'SELECT 1');
+PREPARE stmt FROM @sql_notify; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- ----------------------------
 -- 升级补丁：sys_user 增加 total_mastered 字段（累计掌握，持久化，清空生词本不影响）
@@ -484,11 +484,11 @@ SET u.total_mastered = (
 WHERE u.total_mastered = 0;
 
 -- ----------------------------
--- 升级补丁：word_book 复习时间从 DATE 升级到 DATETIME（艾宾浩斯早期复习精确到分钟）
+-- 升级补丁：word_book 复习时间从 DATE 升级到 DATETIME（幂等：仅当旧列仍为 DATE 时改）
 -- ----------------------------
-ALTER TABLE `word_book`
-  CHANGE COLUMN `next_review_date` `next_review_at` DATETIME DEFAULT NULL COMMENT '艾宾浩斯下次复习时间点',
-  CHANGE COLUMN `last_review_date` `last_review_at` DATETIME DEFAULT NULL COMMENT '最近复习时间点';
+SET @has_old_date = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'word_book' AND COLUMN_NAME = 'next_review_date' AND DATA_TYPE = 'date');
+SET @sql_review_at = IF(@has_old_date > 0, 'ALTER TABLE `word_book` CHANGE COLUMN `next_review_date` `next_review_at` DATETIME DEFAULT NULL COMMENT ''艾宾浩斯下次复习时间点'', CHANGE COLUMN `last_review_date` `last_review_at` DATETIME DEFAULT NULL COMMENT ''最近复习时间点''', 'SELECT 1');
+PREPARE stmt FROM @sql_review_at; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- ----------------------------
 -- 升级补丁：dict_word 增加 level / is_core（四六级等级 + 高频核心词标记）
