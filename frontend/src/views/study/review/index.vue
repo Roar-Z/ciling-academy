@@ -200,7 +200,8 @@
             <!-- 卡片 -->
             <transition :name="flipDir" mode="out-in">
               <div class="flash-card" :key="currentIndex" @click="reveal">
-                <div class="fc-word">{{ currentCard.word }}</div>
+                <div class="fc-word" :class="{ 'fc-word-boost': currentCard.boosted }">{{ currentCard.word }}</div>
+                <div v-if="currentCard.boosted" class="fc-boost-tag">曾认识 · 加深印象</div>
                 <div class="fc-phonetic">{{ currentCard.phonetic || '—' }}</div>
 
                 <div class="fc-detail">
@@ -757,6 +758,8 @@ async function saveCurrentRound() {
     }))
     const r = await finishLearnRound({
       source: mode.value,
+      // 词库独立去重：新词轮次记录所选词库档位（due 复习轮不记档位）
+      ...(mode.value === 'new' ? { level: level.value } : {}),
       count: cards.value.length,
       masteredCount: familiarCount.value,
       words
@@ -982,6 +985,25 @@ function formatTime(t) {
       line-height: 1.08;
       word-break: break-word;
       max-width: 100%;
+
+      /* 加深印象重现的词：暖橙区分默认主题色 */
+      &.fc-word-boost {
+        color: #d97806;
+      }
+    }
+    /* 曾认识角标 */
+    .fc-boost-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: clamp(4px, 1vh, 10px);
+      padding: 3px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #b45309;
+      background: #fdf3e3;
+      border: 1px solid #f3ddba;
+      border-radius: 999px;
     }
     .fc-phonetic {
       font-size: clamp(15px, min(1.9vw, 3.4vh), 26px);

@@ -15,6 +15,9 @@ public class FinishLearnRoundReq {
     @NotBlank(message = "来源不能为空")
     private String source;
 
+    /** 词库档位（source=new 时传：cet4/cet6/gaokao/zhongkao/mixed），用于词库独立去重 */
+    private String level;
+
     @NotNull(message = "词数不能为空")
     private Integer count;
 

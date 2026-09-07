@@ -10,8 +10,10 @@ import com.wordspirit.module.learnround.dto.LearnRoundDetailDto;
 import com.wordspirit.module.learnround.dto.LearnRoundDto;
 import com.wordspirit.module.learnround.entity.LearnRound;
 import com.wordspirit.module.learnround.entity.LearnRoundItem;
+import com.wordspirit.module.learnround.entity.UserPoolWord;
 import com.wordspirit.module.learnround.mapper.LearnRoundItemMapper;
 import com.wordspirit.module.learnround.mapper.LearnRoundMapper;
+import com.wordspirit.module.learnround.mapper.UserPoolWordMapper;
 import com.wordspirit.module.learnround.service.LearnRoundService;
 import com.wordspirit.module.user.entity.User;
 import com.wordspirit.module.user.mapper.UserMapper;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,7 @@ public class LearnRoundServiceImpl implements LearnRoundService {
 
     private final LearnRoundMapper roundMapper;
     private final LearnRoundItemMapper itemMapper;
+    private final UserPoolWordMapper poolWordMapper;
     private final UserMapper userMapper;
     /**
      * 自注入（@Lazy 避免循环依赖），用于本类内调用走 Spring 代理，
@@ -84,6 +88,9 @@ public LearnRoundDto finishRound(Long userId, FinishLearnRoundReq req) {
         LearnRound round = new LearnRound();
         round.setUserId(userId);
         round.setSource(req.getSource());
+        // 词库档位（词库独立去重依据）：new 轮次记录所选词库；空值兜底 all（全局排除）
+        round.setLevel(StrUtil.isBlank(req.getLevel()) ? "all"
+                : req.getLevel().trim().toLowerCase(Locale.ROOT));
         round.setCount(req.getCount());
         round.setMasteredCount(req.getMasteredCount());
         round.setStartedAt(LocalDateTime.now());
@@ -104,6 +111,24 @@ public LearnRoundDto finishRound(Long userId, FinishLearnRoundReq req) {
                 it.setExampleCn(w.getExampleCn());
                 it.setIsMastered(w.getIsMastered() == null ? 0 : w.getIsMastered());
                 itemMapper.insert(it);
+            }
+            // 词库独立去重：新词轮次把词写入 user_pool_word（按所选词库档位），
+            // 轮次满 10 清空后仍作为该词库的持久已学记录；uk 冲突即已存在，忽略
+            String poolLv = round.getLevel();
+            if ("new".equals(req.getSource()) && StrUtil.isNotBlank(poolLv) && !"all".equals(poolLv)) {
+                for (FinishLearnRoundReq.WordItem w : ws) {
+                    UserPoolWord p = new UserPoolWord();
+                    p.setUserId(userId);
+                    p.setLevel(poolLv);
+                    p.setWord(w.getWord());
+                    // 是否点过「认识」——仅认识的词参与 60 天加深重现
+                    p.setMastered(w.getIsMastered() != null && w.getIsMastered() == 1 ? 1 : 0);
+                    try {
+                        poolWordMapper.insert(p);
+                    } catch (DuplicateKeyException ignored) {
+                        // 该词库已有此词，跳过
+                    }
+                }
             }
         }
 

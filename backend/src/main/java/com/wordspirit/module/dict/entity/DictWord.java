@@ -1,6 +1,7 @@
 package com.wordspirit.module.dict.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -34,4 +35,11 @@ public class DictWord implements Serializable {
      * 前端拿到 bookId 后调 reviewWord(bookId, familiar) 走 due 复习流程
      */
     private transient Long bookId;
+
+    /**
+     * 加深印象标记（不入库）：true = 该词是「认识满 60 天后的一次性重现」，
+     * 前端据此显示"曾认识"角标并将单词换色
+     */
+    @TableField(exist = false)
+    private Boolean boosted;
 }

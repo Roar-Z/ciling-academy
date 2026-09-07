@@ -22,6 +22,8 @@ public class LearnRound implements Serializable {
     private Long userId;
     /** 来源：new 新词 / due 待复习 */
     private String source;
+    /** 词库档位：new 轮次记录所选词库（cet4/cet6/gaokao/zhongkao/mixed）；存量与 due 轮次为 all */
+    private String level;
     /** 本轮学过的词数 */
     private Integer count;
     /** 标记掌握的词数 */

@@ -51,7 +51,7 @@ export const uploadAvatar = (file) => {
 // 词典查询（基础释义，不消耗AI额度）
 export const dictLookup = (word) => request.get(`/api/dict/word/${encodeURIComponent(word)}`)
 export const dictSearch = (params) => request.get('/api/dict/search', { params })
-// 随机单词：level 可选 cet4 / cet6 / mixed / all
+// 随机单词：level 可选 cet4 / cet6 / gaokao / zhongkao / mixed / all
 // excludeLearned=true 时排除已学过的词，且每次真随机（用于"学习新词 —— 再来一轮换新词"）
 export const dictRandom = (count = 10, level, excludeLearned = false) =>
   request.get('/api/dict/random', { params: { count, level, excludeLearned } })

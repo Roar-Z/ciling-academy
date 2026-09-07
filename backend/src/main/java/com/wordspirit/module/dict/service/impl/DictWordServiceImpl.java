@@ -7,12 +7,8 @@ import com.wordspirit.common.PageResult;
 import com.wordspirit.module.dict.entity.DictWord;
 import com.wordspirit.module.dict.mapper.DictWordMapper;
 import com.wordspirit.module.dict.service.DictWordService;
-import com.wordspirit.module.learnround.entity.LearnRoundItem;
-import com.wordspirit.module.learnround.mapper.LearnRoundItemMapper;
-import com.wordspirit.module.user.entity.User;
-import com.wordspirit.module.user.mapper.UserMapper;
-import com.wordspirit.module.wordbook.entity.WordBook;
-import com.wordspirit.module.wordbook.mapper.WordBookMapper;
+import com.wordspirit.module.learnround.entity.UserPoolWord;
+import com.wordspirit.module.learnround.mapper.UserPoolWordMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -38,9 +34,7 @@ public class DictWordServiceImpl implements DictWordService {
     private static final Duration DICT_TTL = Duration.ofDays(1);
 
     private final DictWordMapper dictWordMapper;
-    private final WordBookMapper wordBookMapper;
-    private final LearnRoundItemMapper learnRoundItemMapper;
-    private final UserMapper userMapper;
+    private final UserPoolWordMapper userPoolWordMapper;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
@@ -135,11 +129,13 @@ public class DictWordServiceImpl implements DictWordService {
         if (StrUtil.isNotBlank(level)) {
             String lv = level.trim().toLowerCase(Locale.ROOT);
             switch (lv) {
-                case "cet4" -> wrapper.eq(DictWord::getDifficulty, 2);
-                case "cet6" -> wrapper.eq(DictWord::getDifficulty, 4);
-                case "mixed" -> wrapper.in(DictWord::getDifficulty, 2, 4);
-                case "gaokao" -> wrapper.eq(DictWord::getLevel, "gaokao");
-                case "zhongkao" -> wrapper.eq(DictWord::getLevel, "zhongkao");
+                // levels 为多标签 csv（如 zhongkao,gaokao,cet4），按 FIND_IN_SET 命中完整词库池
+                case "cet4" -> wrapper.apply("FIND_IN_SET('cet4', levels) > 0");
+                case "cet6" -> wrapper.apply("FIND_IN_SET('cet6', levels) > 0");
+                case "mixed" -> wrapper.and(w -> w.apply("FIND_IN_SET('cet4', levels) > 0")
+                        .or().apply("FIND_IN_SET('cet6', levels) > 0"));
+                case "gaokao" -> wrapper.apply("FIND_IN_SET('gaokao', levels) > 0");
+                case "zhongkao" -> wrapper.apply("FIND_IN_SET('zhongkao', levels) > 0");
                 // "all" 或未知值：不加过滤
                 default -> { /* no-op */ }
             }
@@ -161,51 +157,31 @@ public class DictWordServiceImpl implements DictWordService {
     @Override
     public List<DictWord> randomUnlearned(int count, String level, Long userId) {
         LambdaQueryWrapper<DictWord> wrapper = new LambdaQueryWrapper<>();
-        if (StrUtil.isNotBlank(level)) {
-            String lv = level.trim().toLowerCase(Locale.ROOT);
-            switch (lv) {
-                case "cet4" -> wrapper.eq(DictWord::getDifficulty, 2);
-                case "cet6" -> wrapper.eq(DictWord::getDifficulty, 4);
-                case "mixed" -> wrapper.in(DictWord::getDifficulty, 2, 4);
-                case "gaokao" -> wrapper.eq(DictWord::getLevel, "gaokao");
-                case "zhongkao" -> wrapper.eq(DictWord::getLevel, "zhongkao");
-                default -> { /* no-op */ }
-            }
+        String lv = StrUtil.isBlank(level) ? "all" : level.trim().toLowerCase(Locale.ROOT);
+        switch (lv) {
+            // levels 为多标签 csv（如 zhongkao,gaokao,cet4），按 FIND_IN_SET 命中完整词库池
+            case "cet4" -> wrapper.apply("FIND_IN_SET('cet4', levels) > 0");
+            case "cet6" -> wrapper.apply("FIND_IN_SET('cet6', levels) > 0");
+            case "mixed" -> wrapper.and(w -> w.apply("FIND_IN_SET('cet4', levels) > 0")
+                    .or().apply("FIND_IN_SET('cet6', levels) > 0"));
+            case "gaokao" -> wrapper.apply("FIND_IN_SET('gaokao', levels) > 0");
+            case "zhongkao" -> wrapper.apply("FIND_IN_SET('zhongkao', levels) > 0");
+            default -> { /* no-op */ }
         }
-        // 排除用户已学过的词：
-        // 1) 生词本里的词（不记得/模糊历史加入）
-        // 2) 历史学习轮次出现过的词（无论认识/模糊/不记得）
-        // 3) sys_user.mastered_words 中的词（新词学习"认识"过的词，长期持久化，不受轮次清理影响）
+        // 词库完全独立（词书模式）：只排除"本词库学过"的词（user_pool_word 按 level 记录）。
+        // 生词本/历史轮次/已掌握不再参与跨词库排除——换词库后学过的词会照常出现，各词库进度独立。
+        // level='all' 为存量迁移数据（历史学习记录），对所有词库生效；选择"全部(all)"时排除任何词库学过的词。
         Set<String> exclude = new HashSet<>();
         if (userId != null) {
-            List<Object> learned = wordBookMapper.selectObjs(new LambdaQueryWrapper<WordBook>()
-                    .select(WordBook::getWord)
-                    .eq(WordBook::getUserId, userId));
-            if (learned != null) {
-                for (Object o : learned) if (o != null) exclude.add(o.toString());
+            List<UserPoolWord> poolRows = userPoolWordMapper.selectList(new LambdaQueryWrapper<UserPoolWord>()
+                    .select(UserPoolWord::getWord, UserPoolWord::getLevel)
+                    .eq(UserPoolWord::getUserId, userId));
+            for (UserPoolWord p : poolRows) {
+                String pLevel = p.getLevel() == null ? "all" : p.getLevel();
+                if ("all".equals(lv) || "all".equals(pLevel) || pLevel.equals(lv)) {
+                    exclude.add(p.getWord().toLowerCase(Locale.ROOT));
+                }
             }
-            List<Object> roundWords = learnRoundItemMapper.selectObjs(new LambdaQueryWrapper<LearnRoundItem>()
-                    .select(LearnRoundItem::getWord)
-                    .eq(LearnRoundItem::getUserId, userId));
-            if (roundWords != null) {
-                for (Object o : roundWords) if (o != null) exclude.add(o.toString());
-            }
-            // 排除"已掌握"集合（新词学习点认识过的词），
-            // 防止 trimOldRounds 清掉旧 round_item 后这些词被重新分配
-            User u = userMapper.selectById(userId);
-            if (u != null && StrUtil.isNotBlank(u.getMasteredWords())) {
-                try {
-                    List<String> mw = cn.hutool.json.JSONUtil.parseArray(u.getMasteredWords()).toList(String.class);
-                    if (mw != null) exclude.addAll(mw);
-                } catch (Exception ignored) {}
-            }
-            org.slf4j.LoggerFactory.getLogger(getClass()).info(
-                    "[randomUnlearned] userId={} level={} count={} wordBookLearned={} roundLearned={} excludeSize={} sql={}",
-                    userId, level, count,
-                    learned == null ? 0 : learned.size(),
-                    roundWords == null ? 0 : roundWords.size(),
-                    exclude.size(),
-                    wrapper.getCustomSqlSegment());
             if (!exclude.isEmpty()) {
                 wrapper.notIn(DictWord::getWord, exclude);
             }
@@ -222,13 +198,74 @@ public class DictWordServiceImpl implements DictWordService {
             return all;
         }
         java.util.Collections.shuffle(all);
-        org.slf4j.LoggerFactory.getLogger(getClass()).info(
-                "[randomUnlearned] after-filter={}",
-                all.stream().limit(count).map(c -> c.getWord()).collect(java.util.stream.Collectors.toList()));
+        // 加深印象：本词库「认识满 60 天且从未重现过」的词混入批次，再出现一次（一次性）
+        if (userId != null && !"all".equals(lv)) {
+            List<DictWord> boost = pickBoostWords(userId, lv, count);
+            if (!boost.isEmpty()) {
+                int remain = Math.max(0, count - boost.size());
+                List<DictWord> result = new ArrayList<>(boost);
+                result.addAll(all.subList(0, Math.min(remain, all.size())));
+                // 重现词与新词随机穿插，不集中在开头
+                java.util.Collections.shuffle(result);
+                return result;
+            }
+        }
         if (all.size() <= count) {
             return all;
         }
         return new ArrayList<>(all.subList(0, count));
+    }
+
+    /** 加深印象触发天数：认识满 60 天未重现 → 再出现一次 */
+    private static final int BOOST_AFTER_DAYS = 60;
+    /** 每批最多混入的重现词数 */
+    private static final int BOOST_MAX_PER_BATCH = 5;
+
+    /**
+     * 取「本词库已认识、满 {@link #BOOST_AFTER_DAYS} 天、且从未重现过」的词，
+     * 最多 {@link #BOOST_MAX_PER_BATCH} 个；取到即标记 boosted_at，保证只重现一次。
+     */
+    private List<DictWord> pickBoostWords(Long userId, String level, int count) {
+        List<UserPoolWord> rows = userPoolWordMapper.selectList(new LambdaQueryWrapper<UserPoolWord>()
+                .select(UserPoolWord::getWord)
+                .eq(UserPoolWord::getUserId, userId)
+                .eq(UserPoolWord::getLevel, level)
+                .eq(UserPoolWord::getMastered, 1)
+                .isNull(UserPoolWord::getBoostedAt)
+                .le(UserPoolWord::getCreatedAt, java.time.LocalDateTime.now().minusDays(BOOST_AFTER_DAYS)));
+        if (rows == null || rows.isEmpty()) {
+            return new ArrayList<>();
+        }
+        java.util.Collections.shuffle(rows);
+        int cap = Math.min(BOOST_MAX_PER_BATCH, Math.max(1, count / 4));
+        List<String> words = new ArrayList<>();
+        for (UserPoolWord p : rows) {
+            if (words.size() >= cap) {
+                break;
+            }
+            words.add(p.getWord());
+        }
+        if (words.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<DictWord> dict = dictWordMapper.selectList(new LambdaQueryWrapper<DictWord>()
+                .in(DictWord::getWord, words));
+        if (dict == null || dict.isEmpty()) {
+            return new ArrayList<>();
+        }
+        // 标记实际重现的词（词典已清理的词不标，下次再试）
+        Set<String> served = dict.stream().map(DictWord::getWord).collect(Collectors.toSet());
+        UserPoolWord mark = new UserPoolWord();
+        mark.setBoostedAt(java.time.LocalDateTime.now());
+        userPoolWordMapper.update(mark, new LambdaQueryWrapper<UserPoolWord>()
+                .eq(UserPoolWord::getUserId, userId)
+                .eq(UserPoolWord::getLevel, level)
+                .in(UserPoolWord::getWord, served)
+                .isNull(UserPoolWord::getBoostedAt));
+        for (DictWord dw : dict) {
+            dw.setBoosted(true);
+        }
+        return dict;
     }
 
     // v4：序列化配置调整后旧缓存格式不兼容，升版本号让旧键自然过期
