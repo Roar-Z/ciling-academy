@@ -357,10 +357,11 @@ const modeOptions = [
   { label: '新词学习', value: 'new' }
 ]
 
-// 四六级筛选（仅新词学习模式生效）
+// 四六级/高考筛选（仅新词学习模式生效）
 const levelOptions = [
   { label: '四级', value: 'cet4' },
   { label: '六级', value: 'cet6' },
+  { label: '高考', value: 'gaokao' },
   { label: '混合', value: 'mixed' }
 ]
 const level = ref('mixed')
@@ -385,7 +386,7 @@ function initBatchSize() {
 
 function initLevel() {
   const local = localStorage.getItem('ws_review_level')
-  if (local && ['cet4', 'cet6', 'mixed'].includes(local)) {
+  if (local && ['cet4', 'cet6', 'gaokao', 'mixed'].includes(local)) {
     level.value = local
   }
 }
@@ -409,6 +410,7 @@ const levelEmptyText = computed(() => {
   switch (level.value) {
     case 'cet4': return '四级词库已学完，继续保持！'
     case 'cet6': return '六级词库已学完，继续保持！'
+    case 'gaokao': return '高考词库已学完，继续保持！'
     case 'mixed': return '四六级词库已学完，继续保持！'
     default:     return '没有更多新词啦'
   }
@@ -881,12 +883,10 @@ function formatTime(t) {
 
 /* ---------- 沉浸模式布局 ---------- */
 .review-page.is-immersive {
-  /* 占满整个视口：背景铺满无留白 */
+  /* 占满整个视口：背景铺满无留白，内容垂直居中 */
   position: relative;
   min-height: 100vh;
-  padding-top: $sp-6;
-  padding-bottom: $sp-6;
-  /* 内容垂直居中 */
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -899,89 +899,90 @@ function formatTime(t) {
     grid-template-columns: 1fr;
   }
 
-  /* 工具条回到文档流，与卡片无缝衔接组成一个整体，
-     由 flex 居中 → 整块内容距视口顶部与底部的空隙一致 */
-  .toolbar {
-    position: static;
-    transform: none;
-    width: min(1400px, 92vw, calc((100vh - 150px) * 16 / 9));
-    margin: 0 auto;
-    border-radius: $radius-card $radius-card 0 0;
-    border-bottom: none;
-  }
+  /* 沉浸模式只保留卡片本体：模式/等级/数量是开始学习前的设置，
+     学习中途不需要，退出沉浸即可调整（与主流背词 App 全屏态一致） */
+  .toolbar { display: none; }
 
   /* 卡片锁定 16:9 横版比例：宽度同时受视口宽/高约束，
-     在 1400px、92vw、82vh 换算宽三者中取最小，保证任何屏幕都完整可见且比例恒定，
-     新词学习 / 今日复习 / 空态 / 完成态大小完全一致，长单词不会使其变形。
-     上下 padding 对称预留顶部进度/提示与底部按钮的空间，
-     使留在流内的单词卡内容区中心 = 卡片中心 = 视口中心 */
+     保证任何屏幕（含手机横屏）都完整可见且比例恒定，
+     新词学习 / 今日复习 / 空态 / 完成态大小完全一致，长单词不会使其变形 */
   .review-card {
     position: relative;
-    width: min(1400px, 92vw, calc((100vh - 150px) * 16 / 9));
+    width: min(1400px, 94vw, calc((100vh - 64px) * 16 / 9));
     height: auto;
     min-height: 0;
     aspect-ratio: 16 / 9;
     overflow: hidden;
     margin: 0 auto;
-    padding: 96px $sp-10;
-    /* 与工具条无缝拼接：仅保留下方圆角 */
-    border-radius: 0 0 $radius-card $radius-card;
+    /* 竖直弹性布局：单词 + 音标始终锁定卡片视觉中心 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* 内边距跟随视口高度缩放：手机横屏自动收紧，不挤压正文 */
+    padding: clamp(48px, 12vh, 104px) clamp(20px, 4vw, 56px);
+    border-radius: $radius-card;
   }
 
-  /* 进度、提示、操作按钮脱离文档流贴边排布，不占用卡片中部空间 */
+  /* 进度、提示、操作按钮脱离文档流贴边排布，不占用卡片中部空间；
+     间距/字号用 vh 联动缩放，矮视口（手机横屏）自动收紧不重叠 */
   .card-progress {
     position: absolute;
-    top: $sp-5;
-    left: $sp-10;
-    right: $sp-10;
+    top: clamp(12px, 2.6vh, 24px);
+    left: clamp(16px, 4vw, 40px);
+    right: clamp(16px, 4vw, 40px);
     margin-bottom: 0;
-    .progress-meta .progress-count { font-size: $fs-xl; }
+    .progress-meta .progress-count { font-size: clamp(14px, 2.4vh, 20px); }
+    .progress-tag { font-size: clamp(11px, 1.9vh, 13px); }
   }
   .review-hint {
     position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
+    top: clamp(38px, 8vh, 66px);
+    left: $sp-4;
+    right: $sp-4;
     margin-bottom: 0;
-    font-size: $fs-lg;
+    font-size: clamp(11px, 2.2vh, 17px);
   }
   .card-actions {
     position: absolute;
-    bottom: 54px;
+    bottom: clamp(18px, 4vh, 36px);
     left: 0;
     right: 0;
     margin-top: 0;
+    /* 沉浸模式按钮保持居中天然宽度，不被 ≤960px 媒体查询的 flex:1 拉满整行 */
+    .act-btn { flex: 0 0 auto; }
   }
   .card-hint {
     position: absolute;
-    bottom: 14px;
+    bottom: 4px;
     left: 0;
     right: 0;
     margin-top: 0;
   }
 
-  /* 内容整体放大一档；字号用 vw 自适应，小屏自动回落。
-     单词 + 音标留在流内居中，释义区整体绝对定位到卡片下部，
-     因此「点击显示释义」时单词位置完全不跳动、始终锁定中心 */
+  /* 内容随视口高度等比缩放：单词 + 音标留在流内居中，
+     释义区整体绝对定位到卡片下部，「点击显示释义」时单词位置不跳动 */
   .flash-card {
     min-height: 0;
     overflow: hidden;
     position: relative;
-    padding: $sp-6 $sp-8;
+    padding: 0;
 
     .fc-word {
-      font-size: clamp(44px, 6vw, 92px);
+      font-size: clamp(34px, min(6vw, 12vh), 92px);
       line-height: 1.08;
       word-break: break-word;
       max-width: 100%;
     }
-    .fc-phonetic { font-size: clamp(17px, 1.9vw, 26px); }
+    .fc-phonetic {
+      font-size: clamp(15px, min(1.9vw, 3.4vh), 26px);
+      margin-top: $sp-2;
+    }
 
     .fc-detail {
       position: absolute;
-      bottom: 44px;
-      left: $sp-8;
-      right: $sp-8;
+      bottom: clamp(8px, 1.6vh, 16px);
+      left: clamp(20px, 4vw, 56px);
+      right: clamp(20px, 4vw, 56px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -989,31 +990,39 @@ function formatTime(t) {
     }
     .fc-divider {
       width: 36px;
-      margin: 0 0 $sp-3;
+      margin: 0 0 clamp(8px, 1.6vh, 14px);
     }
     /* 释义、例句刻意收小：沉浸模式视觉重心留给单词 */
     .fc-meaning {
-      font-size: clamp(15px, 1.5vw, 22px);
+      font-size: clamp(14px, min(1.5vw, 2.8vh), 22px);
       font-weight: 400;
       color: $text-body;
     }
     .fc-example {
-      margin-top: $sp-2;
+      margin-top: clamp(6px, 1.2vh, 10px);
       max-width: 760px;
-      .fc-example-en { font-size: clamp(12px, 1.1vw, 15px); line-height: 1.6; color: $text-secondary; }
-      .fc-example-cn { font-size: clamp(11px, 1vw, 14px); color: $text-caption; }
-      &.fc-example-empty { font-size: clamp(11px, 1vw, 14px); }
+      .fc-example-en { font-size: clamp(12px, min(1.1vw, 2vh), 15px); line-height: 1.6; color: $text-secondary; }
+      .fc-example-cn { font-size: clamp(11px, min(1vw, 1.8vh), 14px); color: $text-caption; }
+      &.fc-example-empty { font-size: clamp(11px, min(1vw, 1.8vh), 14px); }
     }
     .fc-placeholder {
-      font-size: clamp(13px, 1.2vw, 16px);
+      font-size: clamp(12px, min(1.2vw, 2.2vh), 16px);
       color: $text-caption;
     }
   }
-  .state-empty { font-size: $fs-xl; }
+  .state-empty { font-size: clamp(15px, 2.6vh, 20px); }
+
+  /* 操作按钮跟随视口高度缩放：手机横屏不与单词区相互挤压 */
   .act-btn {
-    height: 56px;
-    min-width: 190px;
-    font-size: $fs-lg;
+    height: clamp(42px, 8.5vh, 56px);
+    min-width: clamp(120px, 14vw, 190px);
+    font-size: clamp(15px, 2.4vh, 18px);
+    padding: 0 clamp(16px, 2vw, 28px);
+  }
+
+  /* 矮视口（手机横屏）：底部提示 toast 让位给操作按钮 */
+  @media (max-height: 560px) {
+    .card-hint { display: none; }
   }
 }
 
