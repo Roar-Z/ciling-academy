@@ -35,6 +35,14 @@
 
       <!-- ============ 右侧聊天区 ============ -->
       <section class="chat-panel">
+        <!-- 移动端顶部历史入口（PC 端为左侧常驻面板，此按钮不显示） -->
+        <div class="chat-head">
+          <button class="ch-history-btn" @click="drawerOpen = true">
+            <el-icon :size="16"><Clock /></el-icon>
+            <span>历史对话</span>
+          </button>
+        </div>
+
         <!-- 来源提示条 -->
         <transition name="fade">
           <div class="source-bar" v-if="sourceTitle">
@@ -235,6 +243,42 @@
         </div>
       </section>
     </div>
+
+    <!-- ============ 移动端历史对话抽屉（左滑出，豆包/Kimi 同款交互） ============ -->
+    <el-drawer
+      v-model="drawerOpen"
+      direction="ltr"
+      size="78%"
+      class="ai-session-drawer"
+      :with-header="false"
+    >
+      <div class="asd-body">
+        <p class="asd-title">对话历史</p>
+        <button class="asd-new-btn" @click="newChat">
+          <el-icon :size="14"><Plus /></el-icon>
+          开启新对话
+        </button>
+        <div class="asd-list" v-loading="loadingSessions">
+          <div
+            v-for="s in sessions"
+            :key="s.id"
+            class="asd-item"
+            :class="{ 'is-active': currentSessionId === s.id }"
+            @click="chooseSession(s)"
+          >
+            <div class="asd-item-body">
+              <div class="asd-item-title">{{ s.title }}</div>
+              <div class="asd-item-meta">
+                <span class="asd-item-badge">{{ modeLabel(s.mode) }}</span>
+                <span class="asd-item-time">{{ formatTime(s.lastMessageAt) }}</span>
+              </div>
+            </div>
+            <el-icon class="asd-item-del" @click.stop="removeSession(s)"><Delete /></el-icon>
+          </div>
+          <el-empty v-if="!sessions.length && !loadingSessions" description="还没有对话" :image-size="60" />
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -549,6 +593,17 @@ async function selectSession(s) {
   aiUnavailable.value = false
   sourceTitle.value = s.sourceTitle || ''
   await loadMessages(s.id)
+}
+
+/** 移动端抽屉动作：先收起抽屉再复用原有逻辑 */
+function chooseSession(s) {
+  drawerOpen.value = false
+  selectSession(s)
+}
+
+function newChat() {
+  drawerOpen.value = false
+  newSession()
 }
 
 async function loadMessages(sessionId) {
@@ -1458,8 +1513,148 @@ function scrollToBottom() {
     display: none;
   }
 
+  /* 聊天区顶部历史入口：豆包/Kimi 式，点击左滑出抽屉 */
+  .chat-head {
+    display: flex;
+    align-items: center;
+    padding: $sp-2 $sp-3 0;
+  }
+
+  .ch-history-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border: 1px solid $border-base;
+    border-radius: $radius-pill;
+    background: $bg-soft;
+    font-size: $fs-sm;
+    color: $text-body;
+    cursor: pointer;
+
+    &:active {
+      color: $color-primary;
+      border-color: $primary-3;
+      background: $primary-1;
+    }
+  }
+
   .msg-row .bubble-wrap {
     max-width: 88%;
+  }
+}
+</style>
+
+<style lang="scss">
+/* el-drawer 挂载在 body 下，样式需非 scoped（参考 m-drawer / lv-tip-popper 先例） */
+.ai-session-drawer {
+  .asd-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 18px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .asd-title {
+    margin: 0 0 12px;
+    font-size: $fs-xl;
+    font-weight: 600;
+    color: $text-title;
+  }
+
+  .asd-new-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    padding: 9px 0;
+    margin-bottom: 12px;
+    border: 1px solid $border-base;
+    border-radius: $radius-base;
+    background: $bg-soft;
+    font-size: $fs-sm;
+    color: $text-body;
+    cursor: pointer;
+
+    &:active {
+      color: $color-primary;
+      border-color: $primary-3;
+      background: $primary-1;
+    }
+  }
+
+  .asd-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .asd-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: $radius-base;
+    cursor: pointer;
+    transition: background $transition-fast;
+
+    &.is-active {
+      background: $primary-1;
+
+      .asd-item-title {
+        color: $color-primary;
+        font-weight: 600;
+      }
+    }
+
+    &:active {
+      background: $bg-hover;
+    }
+
+    .asd-item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .asd-item-title {
+      font-size: $fs-base;
+      color: $text-title;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .asd-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .asd-item-badge {
+      font-size: $fs-xs;
+      color: $color-primary;
+      background: #fff;
+      border: 1px solid $primary-2;
+      padding: 0 5px;
+      border-radius: 3px;
+    }
+
+    .asd-item-time {
+      font-size: $fs-xs;
+      color: $text-disabled;
+    }
+
+    /* 触屏无 hover：删除按钮常显，浅灰不抢视线 */
+    .asd-item-del {
+      font-size: 14px;
+      color: $text-disabled;
+      flex-shrink: 0;
+    }
   }
 }
 </style>
