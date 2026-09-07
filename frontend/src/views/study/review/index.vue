@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container review-page" :class="{ 'is-immersive': immersive, 'force-landscape': immersive && forceLandscape }">
+  <div class="page-container review-page" :class="{ 'is-immersive': immersive, 'force-landscape': immersive && forceLandscape && !fullscreen }">
     <!-- 页头（沉浸模式下隐藏） -->
     <div v-if="!immersive" class="page-header">
       <div>
@@ -383,8 +383,9 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-// 沉浸模式
-const { immersive, enter: enterImmersive, exit: exitImmersive } = useImmersive()
+// 沉浸模式（fullscreen=是否处于浏览器全屏；移动端全屏成功后已锁定横屏，
+// 无需再旋转；旋转横板仅作为全屏被拒设备（iOS Safari 等）的回退方案）
+const { immersive, fullscreen, enter: enterImmersive, exit: exitImmersive } = useImmersive()
 
 // 触屏手机进入沉浸即视为横板学习场景：竖屏握持时整页旋转 90°（主流 H5 横屏方案），
 // 用户横向握持手机即得满屏横板体验；本就横屏握持时不旋转
