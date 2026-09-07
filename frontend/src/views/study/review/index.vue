@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container review-page" :class="{ 'is-immersive': immersive }">
+  <div class="page-container review-page" :class="{ 'is-immersive': immersive, 'force-landscape': immersive && forceLandscape }">
     <!-- 页头（沉浸模式下隐藏） -->
     <div v-if="!immersive" class="page-header">
       <div>
@@ -386,6 +386,10 @@ const userStore = useUserStore()
 // 沉浸模式
 const { immersive, enter: enterImmersive, exit: exitImmersive } = useImmersive()
 
+// 触屏手机进入沉浸即视为横板学习场景：竖屏握持时整页旋转 90°（主流 H5 横屏方案），
+// 用户横向握持手机即得满屏横板体验；本就横屏握持时不旋转
+const forceLandscape = isTouchDevice && window.matchMedia('(max-width: 768px)').matches
+
 async function onEnterImmersive() {
   const fullscreenOk = await enterImmersive()
   // 成功全屏时交给浏览器原生「按 Esc 退出全屏」横幅提示；
@@ -393,7 +397,7 @@ async function onEnterImmersive() {
   if (!fullscreenOk) {
     ElMessage.info({
       message: isTouchDevice
-        ? '已进入沉浸模式：点击右上角「退出沉浸」即可退出'
+        ? '已进入沉浸模式：请横向握持手机，点击右上角「退出沉浸」即可退出'
         : '已进入沉浸模式：按 ESC 或点击右上角「退出沉浸」即可退出',
       duration: 3000,
       placement: 'bottom'
@@ -1179,6 +1183,34 @@ function formatTime(t) {
     }
     /* 右侧竖排快捷入口让出进度行「剩余 N 个」的位置 */
     .card-progress { right: 64px; }
+  }
+}
+
+/* ---------- 沉浸模式横板强制（触屏手机） ----------
+   竖屏握持时把整页旋转 90° 呈现横板 UI（主流 H5 横屏方案），
+   用户横向握持手机即得满屏横板体验；横屏握持时本 media query 不命中，不旋转 */
+.review-page.force-landscape {
+  @media (orientation: portrait) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 3000;
+    /* 尺寸取视口宽高互换：旋转后恰好铺满竖屏视口 */
+    width: 100vh;
+    height: 100vw;
+    /* 动态视口修正：部分移动浏览器 100vh 含地址栏区域 */
+    width: 100dvh;
+    height: 100dvw;
+    min-height: 0;
+    transform: rotate(90deg) translateY(-100%);
+    transform-origin: left top;
+    /* transform 环境下 background-attachment: fixed 失效，改为随元素填充（元素本身铺满视口） */
+    background-attachment: scroll;
+
+    /* 覆盖竖屏加高卡片规则：横板空间按内容自适应，避免超出旋转后的视口高度 */
+    .review-card {
+      min-height: 0;
+    }
   }
 }
 
