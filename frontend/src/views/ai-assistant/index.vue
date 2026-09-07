@@ -286,7 +286,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
-import { Plus, Delete, Star, StarFilled, Close, Promotion, Paperclip, MagicStick, Search, Top, Loading, InfoFilled, ArrowDown, Link } from '@element-plus/icons-vue'
+import { Plus, Delete, Star, StarFilled, Close, Promotion, Paperclip, MagicStick, Search, Top, Loading, InfoFilled, ArrowDown, Link, Clock } from '@element-plus/icons-vue'
 import AiLoading from '@/components/ai/AiLoading.vue'
 import AiQuotaTip from '@/components/ai/AiQuotaTip.vue'
 import AiFallbackTip from '@/components/ai/AiFallbackTip.vue'
@@ -314,6 +314,9 @@ const quotaExceeded = ref(false)
 const aiUnavailable = ref(false)
 const sourceTitle = ref('')
 const messageListRef = ref(null)
+
+/** 移动端历史对话抽屉开关（≤900px 显示入口按钮，PC 端用左侧常驻面板） */
+const drawerOpen = ref(false)
 
 /** 输入区增强：深度思考 / 联网搜索（已接通后端，开启会额外消耗 1 次额度） */
 const deepThink = ref(false)
@@ -947,6 +950,11 @@ function scrollToBottom() {
   overflow: hidden;
 }
 
+/* 移动端顶部历史入口（默认隐藏，≤900px 由媒体查询显示） */
+.chat-head {
+  display: none;
+}
+
 /* 来源提示条 */
 .source-bar {
   margin: $sp-3 $sp-4 0;
@@ -1412,6 +1420,8 @@ function scrollToBottom() {
       display: flex;
       align-items: center;
       gap: $sp-2;
+      /* 按钮组整体不收缩：窄屏挤压会让文字竖排变形 */
+      flex-shrink: 0;
     }
 
     .ic-toggle {
@@ -1427,6 +1437,9 @@ function scrollToBottom() {
       font-size: $fs-sm;
       cursor: pointer;
       transition: all $transition-fast;
+      /* 胶囊按钮文字永不折行：折行即竖排变形，且高度变化导致点击落空 */
+      flex-shrink: 0;
+      white-space: nowrap;
 
       &:hover {
         color: $color-primary;
@@ -1451,6 +1464,8 @@ function scrollToBottom() {
       background: $color-warning-soft;
       padding: 2px $sp-2;
       border-radius: $radius-pill;
+      min-width: 0;
+      white-space: nowrap;
 
       b {
         font-weight: 600;
@@ -1518,6 +1533,13 @@ function scrollToBottom() {
     display: flex;
     align-items: center;
     padding: $sp-2 $sp-3 0;
+  }
+
+  /* 输入区工具条可换行：增强额度提示掉到第二行，不再挤压开关按钮
+     （挤压会导致按钮文字竖排变形，且开关位移后点击落空、要点好几下） */
+  .chat-input-bar .ic-toolbar {
+    flex-wrap: wrap;
+    row-gap: 6px;
   }
 
   .ch-history-btn {
