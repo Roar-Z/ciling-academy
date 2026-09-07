@@ -8,24 +8,76 @@ import { ref } from 'vue'
  * 全屏被拒绝时（iOS Safari 等不支持元素全屏）回退为「页面内沉浸 + 竖屏旋转横板」。
  * 退出：按 ESC（桌面）或点击「退出沉浸」按钮 / 系统返回手势。
  *
- * 【视口卡死修复】安卓部分内核（夸克/X5 等）退出全屏后布局视口停留在全屏时的
- * 横向宽度——实测竖屏下视口宽从 ~393 残留到 ~590（宽仍小于高，高度同步缩水），
- * 内容挤在左半边、右半黑屏；重排/重写 viewport meta 等软手段对该内核一律无效。
- * 唯一可靠恢复 = 整页刷新重建视口。
- * 因此采用「基准比对」：进入沉浸前记录布局视口宽度，退出全屏后
- * 若屏幕已回到竖屏而视口仍比基准宽 60px 以上 → 立即刷新。
- * 不做 UA 嗅探、不做「宽>高」猜测——凡视口没回到原样，刷新。
+ * 【视口卡死·无条件修复】安卓部分内核（夸克/X5 等）退出全屏后布局视口会永久
+ * 卡死在全屏时的横向宽度——内容挤在左半边、右半黑屏、移动端菜单变 PC 导航。
+ * 实测该状态下 innerWidth/媒体查询/方向上报全部失真，任何"检测后再刷新"的
+ * 条件方案（宽>高、UA 嗅探、基准比对+方向判断）都会被内核的虚假上报绕过。
+ * 因此最终方案放弃一切检测：
+ *   1. 只要本轮沉浸发生过浏览器全屏，退出时无条件整页刷新（120ms 后），
+ *      刷新重建文档 = 视口必然按当前窗口形状重建（唯一被证实有效的恢复手段）。
+ *      复习进度走 localStorage 持久化，刷新后自动恢复当轮，不丢数据。
+ *   2. 自愈兜底：刷新后若手机类设备仍渲染桌面布局（视口宽度 > 768），
+ *      说明该内核连刷新都救不回，标记 ws_fs_broken —— 以后沉浸模式不再调用
+ *      全屏 API（页面内沉浸，退出必然干净），彻底规避该内核 bug。
  */
+
 const immersive = ref(false)
 // 是否处于浏览器全屏（供 UI 决定是否启用旋转横板回退方案）
 const fullscreen = ref(false)
 let scrollLocked = false
 
-// 触屏设备（手机/平板）：视口校验仅触屏需要（桌面退出全屏无此 bug）
+// 触屏设备（手机/平板）：视口恢复机制仅触屏需要（桌面退出全屏无此 bug）
 export const isTouchDevice =
   typeof window !== 'undefined' &&
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(hover: none) and (pointer: coarse)').matches
+
+// 全屏视口已确认坏掉的内核标记（localStorage 持久化）
+const FS_BROKEN_KEY = 'ws_fs_broken'
+// 「本次刷新是退出沉浸的恢复动作」标记（sessionStorage 跨刷新传递）
+const RECOVER_KEY = 'ws_vp_recovering'
+// 自动恢复刷新计数（防循环上限）
+const RECOVER_COUNT_KEY = 'ws_vp_recover_count'
+
+function isFsBroken() {
+  try {
+    return localStorage.getItem(FS_BROKEN_KEY) === '1'
+  } catch (e) {
+    return false
+  }
+}
+
+/**
+ * 开机自检：本次加载若是「退出沉浸 → 自动刷新」的恢复动作，
+ * 检查视口是否恢复：手机类设备视口仍 > 768（渲染桌面布局）= 刷新也救不回，
+ * 标记坏内核，后续沉浸模式走页面内沉浸；已恢复则清空刷新计数。
+ */
+function bootSelfCheck() {
+  if (!isTouchDevice) return
+  let recovering = false
+  try {
+    recovering = sessionStorage.getItem(RECOVER_KEY) === '1'
+    sessionStorage.removeItem(RECOVER_KEY)
+  } catch (e) {
+    /* 无痕模式等不支持 sessionStorage：跳过自愈标记，无条件刷新仍生效 */
+  }
+  if (!recovering) return
+  const w = document.documentElement.clientWidth
+  if (w > 768) {
+    try {
+      localStorage.setItem(FS_BROKEN_KEY, '1')
+    } catch (e) {
+      /* 忽略 */
+    }
+  } else {
+    try {
+      sessionStorage.removeItem(RECOVER_COUNT_KEY)
+    } catch (e) {
+      /* 忽略 */
+    }
+  }
+}
+bootSelfCheck()
 
 function applyScrollLock(on) {
   if (on === scrollLocked) return
@@ -65,29 +117,24 @@ function exitElementFullscreen() {
   }
 }
 
-// 进入沉浸前的布局视口宽度——退出后的校验基准
-let baselineWidth = 0
-
 /**
- * 退出全屏后的视口校验（核心修复）：
- * 竖屏握持下，视口宽度仍比进入沉浸前明显偏宽 = 内核视口卡死 → 整页刷新。
- * 多轮时点兜底（250ms 足够内核完成过渡；后两轮防偶发抖动）。
- * 复习页进度走 localStorage 持久化，刷新后当轮进度自动恢复，不丢数据。
+ * 退出全屏后的恢复：无条件整页刷新（不做任何检测，条件判断已被证实
+ * 会被夸克/X5 的虚假视口/方向上报绕过）。仅触屏 + 本轮确实进过全屏时执行。
+ * 防循环：sessionStorage 计数上限 2 次；刷新落地的开机自检恢复后清零。
  */
-function scheduleViewportVerify() {
-  if (!isTouchDevice || !baselineWidth) return
-  const check = (delay) =>
-    setTimeout(() => {
-      if (immersive.value) return // 已重新进入沉浸，放弃本次校验
-      const portrait =
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(orientation: portrait)').matches
-      const w = document.documentElement.clientWidth
-      if (portrait && w > baselineWidth + 60) {
-        window.location.reload()
-      }
-    }, delay)
-  ;[250, 700, 1400].forEach(check)
+function scheduleExitReload() {
+  if (!isTouchDevice) return
+  try {
+    const n = Number(sessionStorage.getItem(RECOVER_COUNT_KEY) || '0')
+    if (n >= 2) return
+    sessionStorage.setItem(RECOVER_KEY, '1')
+    sessionStorage.setItem(RECOVER_COUNT_KEY, String(n + 1))
+  } catch (e) {
+    /* 无痕模式：没有标记也能刷，只是失去防循环保护 */
+  }
+  setTimeout(() => {
+    if (!immersive.value) window.location.reload()
+  }, 120)
 }
 
 function onFullscreenChange() {
@@ -95,10 +142,10 @@ function onFullscreenChange() {
   const wasActive = fullscreen.value
   fullscreen.value = active
   // 用户按 ESC / 系统返回键 / 浏览器移出全屏：同步退出沉浸模式
-  // （此时全屏已退出，exit() 内 wasFullscreen=false 不会重复调度校验）
+  // （此时全屏已退出，exit() 内 wasFullscreen=false 不会重复调度刷新）
   if (!active && immersive.value) exit()
-  // 浏览器主动退出全屏路径：这里调度视口校验
-  if (wasActive && !active) scheduleViewportVerify()
+  // 浏览器主动退出全屏路径：这里调度恢复刷新
+  if (wasActive && !active) scheduleExitReload()
 }
 
 // 全屏激活时浏览器原生处理 ESC；若全屏被拒绝（页面内沉浸），这里兜底
@@ -110,14 +157,18 @@ function onKeyDown(e) {
  * 进入沉浸模式
  * @returns {Promise<boolean>} 是否成功进入浏览器全屏
  *   - true：占满整屏（移动端已尝试锁定横屏）
- *   - false：全屏被拒绝（仅页面内沉浸），调用方应自行提示退出方式
+ *   - false：全屏被拒绝 / 该内核被标记为 fs-broken（仅页面内沉浸），
+ *     调用方应自行提示退出方式
  */
 function enter() {
   if (immersive.value) return Promise.resolve(!!getFullscreenElement())
-  // 必须在请求全屏前采样：这就是退出后的"正常视口"基准
-  baselineWidth = document.documentElement.clientWidth
   immersive.value = true
   applyScrollLock(true)
+  if (isFsBroken()) {
+    // 该内核退出全屏视口必卡死且刷新无法恢复：
+    // 降级为页面内沉浸（不调用全屏 API），退出不刷新、必然干净
+    return Promise.resolve(false)
+  }
   document.addEventListener('fullscreenchange', onFullscreenChange)
   document.addEventListener('webkitfullscreenchange', onFullscreenChange)
   document.addEventListener('keydown', onKeyDown)
@@ -147,11 +198,11 @@ function exit() {
   if (wasFullscreen) {
     exitElementFullscreen()
     // 主动退出路径（「退出沉浸」按钮）：监听器已移除，fullscreenchange
-    // 不会再回调，必须在这里自行调度视口校验
-    scheduleViewportVerify()
+    // 不会再回调，必须在这里自行调度恢复刷新
+    scheduleExitReload()
   }
   // wasFullscreen=false：浏览器已自行退出全屏（返回手势/ESC），
-  // onFullscreenChange 会调度校验，此处不重复
+  // onFullscreenChange 会调度刷新，此处不重复
 }
 
 export function useImmersive() {
