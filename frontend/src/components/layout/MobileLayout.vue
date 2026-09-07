@@ -8,6 +8,10 @@
       <span class="m-title">{{ pageTitle }}</span>
       <div class="m-top-actions">
         <template v-if="userStore.isLogin">
+          <button class="m-icon-btn" aria-label="搜索" @click="openSearch">
+            <AppIcon name="search" :size="20" />
+          </button>
+          <AiQuotaDropdown />
           <NotificationBell />
         </template>
         <template v-else>
@@ -110,15 +114,49 @@
         </button>
       </div>
     </el-drawer>
+
+    <!-- ============ 全屏搜索层（对应 PC 导航搜索框，京东/淘宝式搜索页） ============ -->
+    <Transition name="m-search">
+      <div v-if="searchOpen" class="m-search-layer">
+        <div class="m-search-row">
+          <div class="m-search-field">
+            <AppIcon name="search" :size="16" class="m-search-ico" />
+            <input
+              ref="searchInputRef"
+              v-model="searchWord"
+              class="m-search-input"
+              placeholder="搜索功能 / 查单词"
+              enterkeyhint="search"
+              @keydown.enter="handleSearchEnter"
+            />
+          </div>
+          <button class="m-search-cancel" @click="closeSearch">取消</button>
+        </div>
+        <div class="m-search-list">
+          <button
+            v-for="(item, i) in searchSuggestions"
+            :key="item.value + '-' + i"
+            class="m-search-item"
+            @click="handleSearchSelect(item)"
+          >
+            <span class="m-search-item-label">{{ item.label }}</span>
+            <span v-if="item.hot" class="m-search-tag">热门</span>
+            <span v-else-if="item.ai" class="m-search-tag ai">AI</span>
+          </button>
+          <p v-if="!searchSuggestions.length" class="m-search-empty">没有匹配的功能，试试输入单词直接查询</p>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { useImmersive } from '@/composables/useImmersive'
 import NotificationBell from '@/components/common/NotificationBell.vue'
+import AiQuotaDropdown from '@/components/ai/AiQuotaDropdown.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 
 const route = useRoute()
@@ -136,7 +174,24 @@ function onScroll() {
   scrolled.value = window.scrollY > 4
 }
 onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
-onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onScroll)
+  userStore.clearQuotaTimer()
+})
+
+/* ---------- 顶栏 AI 额度：登录后立即拉取 + 60s 轮询（对齐 PC 端 MainLayout 行为） ---------- */
+watch(
+  () => userStore.isLogin,
+  (login) => {
+    if (login) {
+      userStore.refreshQuota().catch(() => {})
+      userStore.startQuotaTimer()
+    } else {
+      userStore.clearQuotaTimer()
+    }
+  },
+  { immediate: true }
+)
 
 /* ---------- 底部 TabBar ---------- */
 const tabs = [
@@ -197,8 +252,80 @@ watch(
   () => route.path,
   () => {
     drawerOpen.value = false
+    closeSearch()
   }
 )
+
+/* ---------- 全屏搜索层：功能直达 + 查单词（与 PC 导航搜索同源逻辑） ---------- */
+const searchOpen = ref(false)
+const searchWord = ref('')
+const searchInputRef = ref(null)
+
+const searchFeatures = [
+  { label: '查单词', value: 'dict', path: '/tools', hot: true },
+  { label: '今日任务', value: 'task', path: '/task', hot: false },
+  { label: '背单词复习', value: 'review', path: '/review', hot: true },
+  { label: '生词本', value: 'wordbook', path: '/word-book', hot: true },
+  { label: '练习试卷', value: 'paper', path: '/paper-list', hot: true },
+  { label: '词灵AI', value: 'ai', path: '/ai-assistant', hot: true },
+  { label: '长难句分析助手', value: 'long-sentence', path: '/long-sentence', keywords: 'ai 长难句 分析 语法', ai: true },
+  { label: '阅读助手', value: 'reading', path: '/reading-helper', keywords: 'ai 阅读 文章 段落', ai: true },
+  { label: '翻译助手', value: 'translate', path: '/translate', keywords: 'ai 翻译 中英', ai: true },
+  { label: '趣味乐园', value: 'game', path: '/game-park', hot: true },
+  { label: '词灵工具', value: 'tools', path: '/tools', hot: false },
+  { label: '我的AI笔记', value: 'note', path: '/ai-note', hot: false },
+  { label: '个人中心', value: 'profile', path: '/profile', hot: false },
+  { label: '金币商城', value: 'shop', path: '/shop', hot: false },
+  { label: '学习报告', value: 'report', path: '/report', hot: false },
+  { label: '设置', value: 'settings', path: '/settings', hot: false }
+]
+
+function fuzzyMatch(text, query) {
+  const t = text.toLowerCase()
+  const q = query.toLowerCase()
+  let i = 0
+  for (const ch of q) {
+    i = t.indexOf(ch, i)
+    if (i === -1) return false
+    i++
+  }
+  return true
+}
+
+const searchSuggestions = computed(() => {
+  const q = searchWord.value.trim()
+  if (!q) return searchFeatures.filter((f) => f.hot)
+  const matched = searchFeatures.filter(
+    (f) =>
+      fuzzyMatch(f.label, q) ||
+      fuzzyMatch(f.value, q) ||
+      fuzzyMatch(f.path, q) ||
+      (f.keywords && fuzzyMatch(f.keywords, q))
+  )
+  // 任意输入都兜底一个「查单词」直达项
+  matched.unshift({ label: `查单词：${q}`, value: `dict:${q}`, path: '/tools', query: { word: q } })
+  return matched
+})
+
+function openSearch() {
+  searchOpen.value = true
+  nextTick(() => searchInputRef.value?.focus())
+}
+
+function closeSearch() {
+  searchOpen.value = false
+  searchWord.value = ''
+}
+
+function handleSearchEnter() {
+  const first = searchSuggestions.value[0]
+  if (first) handleSearchSelect(first)
+}
+
+function handleSearchSelect(item) {
+  closeSearch()
+  router.push({ path: item.path, query: item.query })
+}
 
 function go(path) {
   drawerOpen.value = false
@@ -358,6 +485,135 @@ async function handleLogout() {
   &:active {
     transform: scale(0.94);
   }
+}
+
+/* ---------- 全屏搜索层 ---------- */
+.m-search-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  background: $bg-card;
+  padding: calc(env(safe-area-inset-top) + $sp-2) $sp-3 $sp-3;
+}
+
+.m-search-row {
+  display: flex;
+  align-items: center;
+  gap: $sp-3;
+}
+
+.m-search-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 $sp-3;
+  border-radius: $radius-pill;
+  background: $gray-2;
+
+  .m-search-ico {
+    color: $text-disabled;
+    flex-shrink: 0;
+  }
+}
+
+.m-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: $fs-md;
+  font-family: inherit;
+  color: $text-title;
+
+  &::placeholder {
+    color: $text-disabled;
+  }
+}
+
+.m-search-cancel {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 4px 2px;
+  font-size: $fs-md;
+  color: $primary-5;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.m-search-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: $sp-2;
+}
+
+.m-search-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: $sp-2;
+  padding: 13px 2px;
+  border: none;
+  border-bottom: 1px solid $border-light;
+  background: transparent;
+  font-size: $fs-md;
+  color: $text-title;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:active {
+    background: $bg-hover;
+  }
+
+  .m-search-item-label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.m-search-tag {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: $radius-base;
+  font-size: 10px;
+  background: $color-warning-soft;
+  color: $color-warning;
+
+  &.ai {
+    background: $gray-3;
+    color: $text-secondary;
+  }
+}
+
+.m-search-empty {
+  margin: 0;
+  padding: $sp-5 0;
+  text-align: center;
+  font-size: $fs-sm;
+  color: $text-disabled;
+}
+
+/* 搜索层过渡：顶部轻落 + 淡入 */
+.m-search-enter-active,
+.m-search-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.m-search-enter-from,
+.m-search-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 /* ---------- 抽屉 ---------- */
