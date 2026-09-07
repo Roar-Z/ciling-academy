@@ -22,6 +22,10 @@
           class="drag-word"
           draggable="true"
           @dragstart="onDragStart($event, w)"
+          @touchstart.prevent="onTouchStart($event, w)"
+          @touchmove.prevent="onTouchMove"
+          @touchend="onTouchEnd"
+          @touchcancel="onTouchCancel"
         >{{ w.word }}</div>
         <el-empty v-if="!pendingWords.length" description="全部归类完成！" :image-size="60" />
       </div>
@@ -33,6 +37,7 @@
           :key="cat.key"
           class="bucket"
           :class="{ over: dragOver === cat.key }"
+          :data-cat="cat.key"
           @dragover.prevent="dragOver = cat.key"
           @dragleave="dragOver = null"
           @drop.prevent="onDrop(cat)"
@@ -129,6 +134,58 @@ function onDragStart(e, w) {
   e.dataTransfer.effectAllowed = 'move'
 }
 
+/* ---------- 移动端触摸拖拽（与 PC 端 HTML5 拖拽并存） ---------- */
+let touchGhost = null
+
+function onTouchStart(e, w) {
+  dragWord.value = w
+  const t = e.touches[0]
+  touchGhost = document.createElement('div')
+  touchGhost.className = 'drag-word touch-ghost'
+  touchGhost.textContent = w.word
+  document.body.appendChild(touchGhost)
+  moveGhost(t.clientX, t.clientY)
+  updateTouchOver(t.clientX, t.clientY)
+}
+
+function onTouchMove(e) {
+  if (!dragWord.value) return
+  const t = e.touches[0]
+  moveGhost(t.clientX, t.clientY)
+  updateTouchOver(t.clientX, t.clientY)
+}
+
+function onTouchEnd() {
+  const cat = categories.value.find((c) => c.key === dragOver.value)
+  cleanupTouch()
+  if (cat) onDrop(cat)
+}
+
+function onTouchCancel() {
+  cleanupTouch()
+}
+
+function cleanupTouch() {
+  if (touchGhost) {
+    touchGhost.remove()
+    touchGhost = null
+  }
+  dragOver.value = null
+}
+
+function moveGhost(x, y) {
+  if (!touchGhost) return
+  const rect = touchGhost.getBoundingClientRect()
+  touchGhost.style.left = `${x - rect.width / 2}px`
+  touchGhost.style.top = `${y - rect.height - 14}px`
+}
+
+function updateTouchOver(x, y) {
+  const el = document.elementFromPoint(x, y)
+  const bucket = el && el.closest ? el.closest('.bucket') : null
+  dragOver.value = bucket ? bucket.dataset.cat : null
+}
+
 function onDrop(cat) {
   dragOver.value = null
   const w = dragWord.value
@@ -213,6 +270,9 @@ function back() {
   font-weight: 500;
   cursor: grab;
   user-select: none;
+  /* 移动端手指按住单词拖拽时，禁止页面跟着滚动 */
+  touch-action: none;
+  -webkit-user-drag: element;
   box-shadow: $shadow-xs;
   transition: border-color $transition-fast, color $transition-fast, box-shadow $transition-fast, transform $transition-fast;
 
@@ -328,5 +388,57 @@ function back() {
     justify-content: center;
     gap: 10px;
   }
+}
+
+/* 移动端：4 列分类桶在手机上太挤，改 2×2，桶变小一点方便拖 */
+@media (max-width: 768px) {
+  .game-status {
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+
+    .status-tip {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  .category-buckets {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $sp-2;
+  }
+
+  .bucket {
+    min-height: 120px;
+
+    .bucket-head {
+      padding: 9px 12px;
+      font-size: $fs-sm;
+    }
+
+    .bucket-body {
+      min-height: 70px;
+      padding: $sp-2;
+    }
+
+    .bucket-word {
+      padding: 3px 8px;
+      font-size: 12px;
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+/* 触摸拖拽幽灵卡片：挂在 body 下，scoped 样式作用不到，这里用全局块 */
+.touch-ghost {
+  position: fixed;
+  z-index: 3000;
+  pointer-events: none;
+  margin: 0;
+  background: #fff;
+  color: $color-primary;
+  border-color: $color-primary;
+  box-shadow: $shadow-hover;
 }
 </style>
