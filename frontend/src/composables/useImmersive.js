@@ -1,4 +1,8 @@
 import { ref } from 'vue'
+import { isTouchDevice } from './useDevice'
+
+// 触屏判定统一定义在 useDevice（手机/平板），此处转发导出供旧引用方使用
+export { isTouchDevice }
 
 /**
  * 沉浸模式（模块级单例状态，跨组件共享）
@@ -25,12 +29,6 @@ const immersive = ref(false)
 // 是否处于浏览器全屏（供 UI 决定是否启用旋转横板回退方案）
 const fullscreen = ref(false)
 let scrollLocked = false
-
-// 触屏设备（手机/平板）：视口恢复机制仅触屏需要（桌面退出全屏无此 bug）
-export const isTouchDevice =
-  typeof window !== 'undefined' &&
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(hover: none) and (pointer: coarse)').matches
 
 // 全屏视口已确认坏掉的内核标记（localStorage 持久化）
 const FS_BROKEN_KEY = 'ws_fs_broken'
