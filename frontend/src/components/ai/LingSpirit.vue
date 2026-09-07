@@ -2,7 +2,7 @@
   <div ref="rootRef" class="ling-spirit" :style="containerStyle" aria-hidden="true">
     <!-- 真实渲染：单张 <img> 不断切换 src，浏览器命中预加载缓存，无白屏 -->
     <img
-      v-if="frames.length && currentUrl"
+      v-if="frames.length && currentUrl && !frameFailed"
       :src="currentUrl"
       :width="size"
       :height="size"
@@ -12,7 +12,7 @@
       @load="onLoad"
       @error="onFrameError"
     />
-    <!-- 兜底：在帧未加载完成前的占位，避免页面抖动 -->
+    <!-- 兜底：帧未加载完成或加载失败（如被浏览器广告过滤拦截）时占位，避免空白 -->
     <div v-else class="ling-fallback">{{ fallbackIcon }}</div>
   </div>
 </template>
@@ -69,6 +69,7 @@ const frames = ref([])        // 当前激活模式的帧 URL 列表
 const currentIndex = ref(0)
 const currentUrl = ref('')
 const loaded = ref(false)
+const frameFailed = ref(false)   // 当前帧加载失败（404/被浏览器拦截）→ 显示兜底
 const fallbackIcon = ref('✨')
 
 let manifestConfig = null
@@ -148,6 +149,7 @@ function applyMode(rawMode) {
   currentIndex.value = startIndex
   currentUrl.value = urls[startIndex] || ''
   loaded.value = false
+  frameFailed.value = false
 
   // 重置播放 FPS
   if (fpsTimer) {
@@ -237,11 +239,13 @@ function triggerLoopFade() {
 }
 
 /* ============ 帧加载回调 ============ */
-function onLoad() { loaded.value = true }
+function onLoad() {
+  loaded.value = true
+  frameFailed.value = false
+}
 function onFrameError() {
-  // 静默失败：保留兜底
-  // eslint-disable-next-line no-console
-  console.warn('[LingSpirit] 帧加载失败:', currentUrl.value)
+  // 帧加载失败（404 / 被夸克等浏览器的广告过滤拦截 video_*.webp）→ 显示兜底形象
+  frameFailed.value = true
 }
 
 /* ============ 生命周期 ============ */

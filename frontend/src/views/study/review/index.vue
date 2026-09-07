@@ -200,9 +200,11 @@
             <!-- 卡片 -->
             <transition :name="flipDir" mode="out-in">
               <div class="flash-card" :key="currentIndex" @click="reveal">
-                <div class="fc-word" :class="{ 'fc-word-boost': currentCard.boosted }">{{ currentCard.word }}</div>
-                <div v-if="currentCard.boosted" class="fc-boost-tag">曾认识 · 加深印象</div>
-                <div class="fc-phonetic">{{ currentCard.phonetic || '—' }}</div>
+                <div class="fc-core">
+                  <div class="fc-word" :class="{ 'fc-word-boost': currentCard.boosted }">{{ currentCard.word }}</div>
+                  <div v-if="currentCard.boosted" class="fc-boost-tag">曾认识 · 加深印象</div>
+                  <div class="fc-phonetic">{{ currentCard.phonetic || '—' }}</div>
+                </div>
 
                 <div class="fc-detail">
                   <div class="fc-divider"></div>
@@ -262,7 +264,7 @@
       </div>
     </transition>
 
-    <!-- 沉浸模式：左上角弱化信息条（学习统计 + 快捷入口，半透明玻璃胶囊不抢视野） -->
+    <!-- 沉浸模式：左上角弱化信息条（仅学习统计，半透明玻璃胶囊不抢视野） -->
     <transition name="fade">
       <div v-if="immersive" class="immersive-topbar">
         <div class="it-stats">
@@ -271,18 +273,6 @@
           <span class="it-stat">待复习 <b>{{ dueCount }}</b></span>
           <span class="it-sep it-sep-rate"></span>
           <span class="it-stat it-stat-rate">掌握率 <b>{{ roundPercent }}%</b></span>
-        </div>
-        <span class="it-actions-sep"></span>
-        <div class="it-actions">
-          <button class="it-btn" title="巩固测验" :disabled="todayWords < dailyGoal" @click="openTestDialog">
-            <AppIcon name="check-circle" :size="15" />
-          </button>
-          <button class="it-btn" title="生词本" @click="immersiveGo('/word-book')">
-            <AppIcon name="book-open" :size="15" />
-          </button>
-          <button class="it-btn" title="词灵 AI" @click="immersiveGo('/ai-assistant')">
-            <AppIcon name="sparkles" :size="15" />
-          </button>
         </div>
       </div>
     </transition>
@@ -1026,16 +1016,29 @@ function formatTime(t) {
     margin-top: 0;
   }
 
-  /* 内容随视口高度等比缩放：单词 + 音标留在流内居中，
-     释义区整体绝对定位到卡片下部，「点击显示释义」时单词位置不跳动 */
+  /* 内容随视口高度等比缩放：flash-card 撑满卡片，fc-core（单词+音标）flex:1
+     居中在「释义区之上的全部空间」——释义显示与否、内容长短都不影响：
+     单词永远是卡片的视野重心，释义只在卡片底部占自己的自然高度，永不重叠 */
   .flash-card {
     min-height: 0;
     overflow: hidden;
     position: relative;
     padding: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .fc-core {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
 
     .fc-word {
-      font-size: clamp(36px, min(6.5vw, 13vh), 104px);
+      font-size: clamp(36px, min(6.5vw, 13vh), 112px);
       line-height: 1.08;
       word-break: break-word;
       max-width: 100%;
@@ -1138,7 +1141,7 @@ function formatTime(t) {
       padding: $sp-2 $sp-1;
 
       /* 视觉重心=单词：字号放大，音标/提示收小让位 */
-      .fc-word { font-size: clamp(34px, min(10vw, 12vh), 58px); }
+      .fc-word { font-size: clamp(36px, min(11vw, 14vh), 64px); }
       .fc-phonetic { font-size: clamp(11px, min(1.7vw, 2vh), 13px); margin-top: 2px; }
 
       .fc-detail {
@@ -1540,11 +1543,6 @@ function formatTime(t) {
     height: 10px;
     background: rgba(255, 255, 255, 0.25);
   }
-  .it-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
 }
 
 /* 快捷入口圆形按钮（顶部信息条内 + 窄屏竖排共用） */
@@ -1604,9 +1602,7 @@ function formatTime(t) {
     padding: 4px 10px;
     font-size: 11px;
 
-    /* 窄屏只保留两个统计数字，快捷入口移到右侧竖排，避免与退出按钮挤在一行 */
-    .it-actions,
-    .it-actions-sep,
+    /* 窄屏隐藏掌握率，避免与退出按钮挤在一行 */
     .it-stat-rate,
     .it-sep-rate { display: none; }
     .it-stats { gap: 8px; }

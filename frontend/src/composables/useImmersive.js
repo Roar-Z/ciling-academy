@@ -85,27 +85,19 @@ function restoreViewport() {
     setTimeout(() => meta.setAttribute('content', original), 350)
   }
   // 4) 最终兜底：触屏设备上若屏幕已回到竖屏而布局视口仍是横向（宽>高），
-  //    说明内核视口未恢复，延迟两次确认（避开系统旋转回摆的竞态）后整页刷新
+  //    说明内核视口未恢复，分多轮确认后整页刷新（不依赖 orientation.angle：
+  //    卡死的内核连方向上报都可能失真）
   if (!isTouchDevice) return
-  const isStuck = () => {
-    let angle = 0
-    try {
-      if (screen.orientation && typeof screen.orientation.angle === 'number') {
-        angle = screen.orientation.angle
-      }
-    } catch (e) {
-      /* 忽略 */
-    }
-    const portrait = angle === 0 || angle === 180
-    return portrait && window.innerWidth > window.innerHeight
-  }
-  setTimeout(() => {
+  const isStuck = () => window.innerWidth > window.innerHeight
+  const tryReload = (delay) => setTimeout(() => {
     if (isStuck()) {
-      setTimeout(() => {
-        if (isStuck()) location.reload()
-      }, 600)
+      // 再给一次机会确认不是旋转回摆，仍未恢复则强制刷新重建视口
+      setTimeout(() => { if (isStuck()) location.reload() }, 500)
     }
-  }, 1000)
+  }, delay)
+  tryReload(800)
+  tryReload(1600)
+  tryReload(2600)
 }
 
 function onFullscreenChange() {
@@ -158,12 +150,8 @@ function exit() {
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   document.removeEventListener('webkitfullscreenchange', onFullscreenChange)
   document.removeEventListener('keydown', onKeyDown)
-  // 解除横屏锁定（退出全屏时浏览器也会自动释放，这里显式兜底）
-  try {
-    if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock()
-  } catch (e) {
-    /* 忽略 */
-  }
+  // 不显式 unlock：规范规定退出全屏时浏览器自动释放方向锁定，
+  // 在全屏过渡中主动 unlock 反而可能诱发夸克/X5 视口旋转卡死
   if (getFullscreenElement()) exitElementFullscreen()
 }
 

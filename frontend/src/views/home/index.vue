@@ -7,7 +7,7 @@
           <AppIcon name="sparkles" :size="14" />
           <span>AI 增强型英语单词学习平台</span>
         </div>
-        <h1 class="hero-title">记单词，可以比想象中<br />更聪明、更轻松</h1>
+        <h1 class="hero-title">记单词，可以比想象中<br />更简单、更轻松</h1>
         <p class="hero-desc">
           艾宾浩斯记忆曲线 × 词灵AI 智能解析，每天 10 分钟，
           让每个单词都真正被记住。
