@@ -48,7 +48,7 @@ CREATE TABLE `dict_word` (
   `example`     VARCHAR(512) NOT NULL DEFAULT '' COMMENT '例句',
   `example_cn`  VARCHAR(512) NOT NULL DEFAULT '' COMMENT '例句翻译',
   `difficulty`  TINYINT     NOT NULL DEFAULT 1 COMMENT '难度等级1-5',
-  `level`       VARCHAR(8)  NOT NULL DEFAULT 'other' COMMENT '等级: cet4(四级)/cet6(六级)/other(其他)',
+  `level`       VARCHAR(8)  NOT NULL DEFAULT 'other' COMMENT '等级: cet4(四级)/cet6(六级)/gaokao(高考)/other(其他)',
   `is_core`     TINYINT     NOT NULL DEFAULT 0 COMMENT '是否高频核心词 1=是 0=否（优先推送）',
   `created_at`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),

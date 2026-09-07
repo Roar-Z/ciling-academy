@@ -138,6 +138,7 @@ public class DictWordServiceImpl implements DictWordService {
                 case "cet4" -> wrapper.eq(DictWord::getDifficulty, 2);
                 case "cet6" -> wrapper.eq(DictWord::getDifficulty, 4);
                 case "mixed" -> wrapper.in(DictWord::getDifficulty, 2, 4);
+                case "gaokao" -> wrapper.eq(DictWord::getLevel, "gaokao");
                 // "all" 或未知值：不加过滤
                 default -> { /* no-op */ }
             }
@@ -165,6 +166,7 @@ public class DictWordServiceImpl implements DictWordService {
                 case "cet4" -> wrapper.eq(DictWord::getDifficulty, 2);
                 case "cet6" -> wrapper.eq(DictWord::getDifficulty, 4);
                 case "mixed" -> wrapper.in(DictWord::getDifficulty, 2, 4);
+                case "gaokao" -> wrapper.eq(DictWord::getLevel, "gaokao");
                 default -> { /* no-op */ }
             }
         }
