@@ -1716,7 +1716,7 @@ function formatTime(t) {
   }
 
   .fc-phonetic {
-    margin-top: 0;
+    margin-top: 14px;
     font-size: $fs-md;
     color: $text-caption;
     font-family: Georgia, 'Times New Roman', serif;
