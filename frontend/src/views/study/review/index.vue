@@ -357,14 +357,15 @@ const modeOptions = [
   { label: '新词学习', value: 'new' }
 ]
 
-// 四六级/高考筛选（仅新词学习模式生效）
+// 四六级/中高考筛选（仅新词学习模式生效）
 const levelOptions = [
   { label: '四级', value: 'cet4' },
   { label: '六级', value: 'cet6' },
   { label: '高考', value: 'gaokao' },
+  { label: '中考', value: 'zhongkao' },
   { label: '混合', value: 'mixed' }
 ]
-const level = ref('mixed')
+const level = ref('cet4')
 
 const batchSizeOptions = [
   { label: '10个', value: 10 },
@@ -386,7 +387,7 @@ function initBatchSize() {
 
 function initLevel() {
   const local = localStorage.getItem('ws_review_level')
-  if (local && ['cet4', 'cet6', 'gaokao', 'mixed'].includes(local)) {
+  if (local && ['cet4', 'cet6', 'gaokao', 'zhongkao', 'mixed'].includes(local)) {
     level.value = local
   }
 }
@@ -411,6 +412,7 @@ const levelEmptyText = computed(() => {
     case 'cet4': return '四级词库已学完，继续保持！'
     case 'cet6': return '六级词库已学完，继续保持！'
     case 'gaokao': return '高考词库已学完，继续保持！'
+    case 'zhongkao': return '中考词库已学完，继续保持！'
     case 'mixed': return '四六级词库已学完，继续保持！'
     default:     return '没有更多新词啦'
   }
