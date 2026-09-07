@@ -406,9 +406,9 @@ async function onEnterImmersive() {
   }
 }
 
-// 沉浸模式下的快捷入口跳转：先退出沉浸恢复导航栏，再跳转
+// 沉浸模式下的快捷入口跳转：保持全屏沉浸状态直接跳转（全屏跨路由保持，
+// 目标页同样以无导航栏的沉浸样式展示；系统返回键退出全屏时会自动恢复导航栏）
 function immersiveGo(path) {
-  exitImmersive()
   go(path)
 }
 

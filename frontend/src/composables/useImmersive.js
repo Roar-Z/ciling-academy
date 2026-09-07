@@ -57,17 +57,29 @@ function exitElementFullscreen() {
   }
 }
 
-// 部分安卓浏览器（夸克/X5 WebView）退出全屏后布局视口不回调 resize，
-// 页面会残留全屏时的横向宽度（内容挤在一侧、另一半黑屏）；
-// 通过重写 viewport meta + 触发 resize 强制浏览器重算视口
+// 部分安卓浏览器（夸克/X5 WebView）退出全屏后布局视口停留在全屏时的横向宽度，
+// 页面内容挤在一侧、另一半黑屏；需要多重手段强制浏览器重算视口
 function restoreViewport() {
+  const html = document.documentElement
+  const body = document.body
+  // 1) 强制整树重排（同一任务内设置并还原，不会产生可见闪烁）
+  html.style.overflow = 'auto'
+  body.style.display = 'none'
+  void body.offsetHeight
+  body.style.display = ''
+  html.style.overflow = ''
+  // 2) 通知依赖窗口尺寸的逻辑
   window.dispatchEvent(new Event('resize'))
   window.scrollTo(0, 0)
+  // 3) 重写 viewport meta 并延迟还原（部分内核延迟后才重算布局视口）
   const meta = document.querySelector('meta[name="viewport"]')
-  if (!meta) return
-  const original = meta.getAttribute('content')
-  meta.setAttribute('content', `${original}, minimum-scale=1`)
-  requestAnimationFrame(() => meta.setAttribute('content', original))
+  if (meta) {
+    const original = meta.getAttribute('content')
+    meta.setAttribute('content', `${original}, minimum-scale=1`)
+    setTimeout(() => meta.setAttribute('content', original), 350)
+  }
+  // 4) 部分内核视口回调晚于 fullscreenchange，延迟再补一次 resize
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 400)
 }
 
 function onFullscreenChange() {
