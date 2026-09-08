@@ -18,7 +18,7 @@ UPDATE `shop_item` SET `status` = 'off_sale' WHERE `category` = 'dict_pack';
 INSERT INTO `shop_item` (`name`, `category`, `icon`, `price`, `description`, `status`, `resource_key`) VALUES
 ('中考核心词汇速记', 'resource', '📙', 250, '中考词频 TOP300 · 音标+释义速记', 'on_sale', 'zk_words'),
 ('四级高频词速记手册', 'resource', '📘', 300, 'CET-4 大纲核心词 3849 · 附音标释义', 'on_sale', 'cet4_words'),
-('六级高频词速记手册', 'resource', '📗', 350, 'CET-6 大纲核心词 5407 · 附音标释义', 'on_sale', 'cet6_words'),
+('六级高频词速记手册', 'resource', '📗', 350, 'CET-6 大纲核心词 5805 · 附音标释义（含四级词汇）', 'on_sale', 'cet6_words'),
 ('四六级高频短语速查', 'resource', '🔖', 400, '130+ 必背短语 · 阅读写作双高频', 'on_sale', 'phrases'),
 ('四六级写作万能句型', 'resource', '✍️', 450, '60+ 高分句型 · 开头论证结尾全覆盖', 'on_sale', 'writing'),
 ('高考高频词+满分作文模板', 'resource', '📚', 500, 'TOP500 高频词 + 读后续写/应用文模板', 'on_sale', 'gk_pack'),
