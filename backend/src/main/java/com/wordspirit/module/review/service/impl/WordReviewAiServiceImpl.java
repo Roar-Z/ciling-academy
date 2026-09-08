@@ -16,7 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 生词巩固服务实现
@@ -48,6 +51,26 @@ public class WordReviewAiServiceImpl implements WordReviewAiService {
             if (StrUtil.isNotBlank(word)) {
                 words.add(word);
             }
+        }
+
+        // 覆盖旧包：旧包的单词已全部包含在新包中时，删除旧包（重新生成即覆盖）
+        Set<String> newWords = words.stream()
+                .map(w -> w.trim().toLowerCase())
+                .collect(Collectors.toSet());
+        List<AiReviewContent> oldPacks = reviewMapper.selectList(new LambdaQueryWrapper<AiReviewContent>()
+                .eq(AiReviewContent::getUserId, userId));
+        List<Long> coveredIds = oldPacks.stream()
+                .filter(old -> StrUtil.isNotBlank(old.getWords()))
+                .filter(old -> Arrays.stream(old.getWords().split(","))
+                        .map(w -> w.trim().toLowerCase())
+                        .allMatch(newWords::contains))
+                .map(AiReviewContent::getId)
+                .collect(Collectors.toList());
+        if (!coveredIds.isEmpty()) {
+            reviewMapper.delete(new LambdaQueryWrapper<AiReviewContent>()
+                    .eq(AiReviewContent::getUserId, userId)
+                    .in(AiReviewContent::getId, coveredIds));
+            log.info("用户{}保存新巩固包，覆盖删除{}个旧包", userId, coveredIds.size());
         }
 
         AiReviewContent content = new AiReviewContent();

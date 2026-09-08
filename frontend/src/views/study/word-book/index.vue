@@ -82,7 +82,12 @@
         <el-table-column label="操作" width="155" fixed="right" align="center">
           <template #default="{ row }">
             <div class="op-actions">
-              <el-button text type="primary" size="small" @click="openReviewPack(row)">助记</el-button>
+              <el-button
+                text
+                size="small"
+                :type="mnemonicWords.has(row.word.toLowerCase()) ? 'primary' : 'info'"
+                @click="openReviewPack(row)"
+              >助记</el-button>
               <el-button text type="warning" size="small" @click="markFamiliar(row, true)">✓</el-button>
               <el-button text type="danger" size="small" @click="remove(row)">删除</el-button>
             </div>
@@ -131,8 +136,8 @@
       </template>
     </el-dialog>
 
-    <!-- 助记巩固包弹窗 -->
-    <el-dialog v-model="reviewDialogVisible" title="生词助记巩固包" width="760px">
+    <!-- 助记巩固包弹窗（单词维度：只展示该单词自己的助记卡片） -->
+    <el-dialog v-model="reviewDialogVisible" :title="reviewDialogTitle" width="760px">
       <div class="ai-content" v-if="reviewDialogHtml" v-html="reviewDialogHtml"></div>
       <el-empty v-else description="该单词暂无已保存的巩固包，可勾选后交给词灵AI生成" />
     </el-dialog>
@@ -171,9 +176,13 @@ const adding = ref(false)
 
 const reviewDialogVisible = ref(false)
 const reviewDialogHtml = ref('')
+const reviewDialogTitle = ref('生词助记巩固包')
+/** 已保存过助记的单词集合（小写），用于区分「助记」按钮状态 */
+const mnemonicWords = ref(new Set())
 
 onMounted(async () => {
   await loadList()
+  await refreshMnemonicWords()
   // 从AI助手保存巩固包后跳回，展示对应巩固包
   if (route.query.reviewId) {
     await loadReviewPacks()
@@ -183,7 +192,10 @@ onMounted(async () => {
 watch(
   () => route.query.reviewId,
   async (val) => {
-    if (val) await loadReviewPacks()
+    if (val) {
+      await refreshMnemonicWords()
+      await loadReviewPacks()
+    }
   }
 )
 
@@ -379,13 +391,15 @@ async function handleAdd() {
   }
 }
 
-/** 在已保存的巩固包中寻找包含该单词的包并展示 */
+/** 从AI保存巩固包跳回时，预览刚保存的整包内容 */
 async function loadReviewPacks() {
   try {
     const packs = await listReviewContents()
     const pack = packs.find((p) => p.id === Number(route.query.reviewId)) || packs[0]
     if (pack) {
-      reviewDialogHtml.value = renderAiContent(pack.reviewJson).html
+      reviewDialogTitle.value = pack.title || '生词助记巩固包'
+      // 内容里自带包标题 h3，弹窗标题栏已展示，去掉避免重复
+      reviewDialogHtml.value = renderAiContent(pack.reviewJson, { hideTitle: true }).html
       reviewDialogVisible.value = true
     }
   } catch (e) {
@@ -393,11 +407,49 @@ async function loadReviewPacks() {
   }
 }
 
-async function openReviewPack(row) {
+/** 刷新已保存助记的单词集合（用于「助记」按钮高亮状态） */
+async function refreshMnemonicWords() {
   try {
     const packs = await listReviewContents()
-    const pack = packs.find((p) => p.words && p.words.split(',').includes(row.word))
-    reviewDialogHtml.value = pack ? renderAiContent(pack.reviewJson).html : ''
+    const set = new Set()
+    packs.forEach((p) => {
+      String(p.words || '')
+        .split(',')
+        .forEach((w) => {
+          const t = w.trim().toLowerCase()
+          if (t) set.add(t)
+        })
+    })
+    mnemonicWords.value = set
+  } catch (e) {
+    /* 忽略 */
+  }
+}
+
+/** 查看单词自己的助记：取包含该单词的最新巩固包，只渲染该单词的卡片 */
+async function openReviewPack(row) {
+  const target = row.word.trim().toLowerCase()
+  reviewDialogTitle.value = `${row.word} · 助记巩固包`
+  reviewDialogHtml.value = ''
+  try {
+    // 接口已按创建时间倒序，第一个命中即最新版本
+    const packs = await listReviewContents()
+    const pack = packs.find(
+      (p) => p.words && p.words.split(',').some((w) => w.trim().toLowerCase() === target)
+    )
+    if (pack) {
+      const json = typeof pack.reviewJson === 'string' ? JSON.parse(pack.reviewJson) : pack.reviewJson
+      const card = (json.word_list || []).find(
+        (w) => String(w.word || '').trim().toLowerCase() === target
+      )
+      if (card) {
+        reviewDialogHtml.value = renderAiContent({
+          ...json,
+          group_title: `${row.word} · 助记卡片`,
+          word_list: [card]
+        }).html
+      }
+    }
   } catch (e) {
     reviewDialogHtml.value = ''
   }
