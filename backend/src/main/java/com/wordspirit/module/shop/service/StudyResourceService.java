@@ -45,8 +45,8 @@ public class StudyResourceService {
     private static final java.util.Map<String, ResourceDef> DEFS = new java.util.HashMap<>();
 
     static {
-        register("cet4_words", "四级高频词速记手册", "CET-4 真题词频 TOP500", "words", "study-data/cet4_words.json", "cet");
-        register("cet6_words", "六级高频词速记手册", "CET-6 真题词频 TOP500", "words", "study-data/cet6_words.json", "cet");
+        register("cet4_words", "四级高频词速记手册", "CET-4 大纲核心词 3849 · 音标+释义 · 按词频排序", "words", "study-data/cet4_words.json", "cet");
+        register("cet6_words", "六级高频词速记手册", "CET-6 大纲核心词 5407 · 音标+释义 · 按词频排序", "words", "study-data/cet6_words.json", "cet");
         register("writing", "四六级写作万能句型手册", "60+ 高分句型 · 开头/论证/转折/结尾全覆盖", "sentences", "study-data/writing_sentences.json", "cet");
         register("phrases", "四六级高频短语速查手册", "130+ 必背短语 · 阅读写作双高频", "phrases", "study-data/phrases_cet.json", "cet");
         register("kaoyan_words", "考研英语核心高频词汇", "大纲词频 TOP800 · 按真题词频排序", "words", "study-data/kaoyan_words.json", "kaoyan");
@@ -108,7 +108,7 @@ public class StudyResourceService {
             throw new IllegalArgumentException("unknown resource " + key);
         }
         File cache = new File(System.getProperty("java.io.tmpdir"),
-                "wordspirit-res-" + key + "-v20260907.pdf");
+                "wordspirit-res-" + key + "-v20260908.pdf");
         if (cache.exists() && cache.length() > 0) {
             return cache;
         }
