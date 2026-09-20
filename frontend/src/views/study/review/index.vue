@@ -742,6 +742,14 @@ function speakFallback(word) {
 async function playWord(card, auto = false) {
   if (!card || !card.word) return
   const word = card.word
+  // 自动播放但音频还没缓存好（新词首次出现）：不等网络下载——await 会耗尽
+  // 切卡点击带来的手势激活，play() 必被浏览器拦截。立即用 TTS 朗读顶上。
+  if (auto && !card.audioUrl) {
+    console.log('[AUTOPLAY] tts fallback, mp3 not cached ->', word)
+    playingWord.value = word
+    speakFallback(word)
+    return
+  }
   playingWord.value = word
   try {
     // 已随单词拉取到 audioUrl 则直接播；预取还在路上就复用同一个请求（不重复发）；
