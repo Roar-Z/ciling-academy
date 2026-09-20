@@ -110,9 +110,8 @@ export default defineConfig({
     }
   },
   esbuild: {
-    // 【临时调试】为定位自动播放问题暂时保留 console，排查完成后需恢复下面这行：
-    // drop: ['console', 'debugger']
-    drop: ['debugger']
+    // 生产环境移除 console 与 debugger，dev 模式不受影响
+    drop: ['console', 'debugger']
   },
   build: {
     target: 'es2015',
