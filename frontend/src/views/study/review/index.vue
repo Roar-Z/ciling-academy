@@ -672,6 +672,18 @@ let audioEl = null
 /** word → 预取 Promise（点击与切卡复用同一请求，失败后移除以允许重试） */
 const prefetchMap = new Map()
 
+/**
+ * 音频相对路径 → 完整 URL。
+ * 后端返回 /api/dict/audio/xxx.mp3，但页面域名（静态站）没有 /api 代理，
+ * 必须和 axios 一样拼上 API baseURL（生产为 https://api.cilinglearn.com）。
+ */
+function resolveApiUrl(u) {
+  if (!u) return u
+  const base = import.meta.env.VITE_API_BASE_URL
+  if (base && u.startsWith('/')) return base.replace(/\/+$/, '') + u
+  return u
+}
+
 function prefetchAudio(card) {
   if (!card || !card.word || card.audioUrl || prefetchMap.has(card.word)) return
   const p = dictWordAudio(card.word)
@@ -681,7 +693,7 @@ function prefetchAudio(card) {
         // 预热浏览器缓存，点击时 play() 无需再等下载
         const warm = new Audio()
         warm.preload = 'auto'
-        warm.src = url
+        warm.src = resolveApiUrl(url)
         warm.load()
       }
       return url || null
@@ -771,21 +783,21 @@ async function playWord(card, auto = false) {
     if (playingWord.value !== word) return // 期间已切词/停止
     if (url) {
       if (!audioEl) audioEl = new Audio()
-      audioEl.src = url
+      audioEl.src = resolveApiUrl(url)
       audioEl.onended = () => { if (playingWord.value === word) playingWord.value = '' }
-      audioEl.onerror = () => { if (playingWord.value === word) (auto ? (playingWord.value = '') : speakFallback(word)) }
+      // mp3 加载失败（如部署环境未代理音频路径）：自动/手动都降级 TTS，保证一定有声
+      audioEl.onerror = () => { if (playingWord.value === word) speakFallback(word) }
       await audioEl.play()
       console.log('[AUTOPLAY] played ->', word, 'auto=', auto)
-    } else if (!auto) {
-      speakFallback(word)
     } else {
-      playingWord.value = ''
+      speakFallback(word)
     }
   } catch (e) {
-    // 自动播放被拦截（浏览器策略）→ 静默；手动播放失败 → 降级 TTS
+    // 播放异常：NotAllowedError=浏览器拦截（多为页面首次、无手势）→ 静默；
+    // 其余（含资源 404）→ 降级 TTS
     console.log('[AUTOPLAY] play blocked/error ->', word, e && e.name)
     if (playingWord.value === word) {
-      if (auto) playingWord.value = ''
+      if (e && e.name === 'NotAllowedError') playingWord.value = ''
       else speakFallback(word)
     }
   }
