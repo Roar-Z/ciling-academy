@@ -36,5 +36,11 @@ public class WordBook implements Serializable {
     private String aiNote;
     /** 阅读解析要点JSON: grammar/colloc/synonym/explain/origin（列名 word_usage，避开 MySQL 关键字） */
     private String wordUsage;
+    /**
+     * 发音音频相对路径（不入库）。
+     * due-review 返回前由后端按 word 从 dict_word 关联填充，供前端播放发音
+     */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String audioUrl;
     private LocalDateTime createdAt;
 }

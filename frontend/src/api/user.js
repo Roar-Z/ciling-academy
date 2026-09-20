@@ -57,3 +57,6 @@ export const dictRandom = (count = 10, level, excludeLearned = false) =>
   request.get('/api/dict/random', { params: { count, level, excludeLearned } })
 // 首页平台统计（游客可用）：收录单词数 + 全站累计掌握单词数
 export const getPlatformStats = () => request.get('/api/dict/stats', { silentCodes: [404, 500] })
+// 单词发音音频：后端确保 mp3 已缓存到 uploads/audio/ 并回写数据库，返回相对路径（失败返回 null，前端降级浏览器 TTS）
+export const dictWordAudio = (word) =>
+  request.get(`/api/dict/word/${encodeURIComponent(word)}/audio`, { silentCodes: [404, 500] })

@@ -29,6 +29,8 @@ public class DictWord implements Serializable {
     private String level;
     /** 是否高频核心词 1=是 0=否 */
     private Integer isCore;
+    /** 发音音频相对路径（/uploads/audio/xxx.mp3，空=尚未缓存） */
+    private String audioUrl;
     /**
      * 关联的 word_book.id（不入库）。
      * 用于新词学习 / randomStudy 拉到"艾宾浩斯到期复习词"时，

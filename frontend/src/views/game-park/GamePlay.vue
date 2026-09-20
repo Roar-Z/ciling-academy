@@ -55,7 +55,7 @@ const currentGame = computed(() => {
   padding: $sp-5 $safe-padding $sp-10;
   /* 背景图：滚动时固定在视口，与乐园首页一致 */
   background-image: linear-gradient(rgba(255, 252, 248, 0.45), rgba(255, 252, 248, 0.45)),
-    url('@/assets/images/review-bg.png');
+    url('@/assets/images/review-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

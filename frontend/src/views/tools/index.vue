@@ -582,7 +582,7 @@ function go(path) {
   max-width: none;
   /* 半透明遮罩 + 背景图：滚动时图片固定在浏览器视口不动 */
   background-image: linear-gradient(rgba(255, 252, 248, 0.45), rgba(255, 252, 248, 0.45)),
-    url('@/assets/images/review-bg.png');
+    url('@/assets/images/review-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

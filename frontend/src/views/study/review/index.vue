@@ -203,7 +203,18 @@
                 <div class="fc-core">
                   <div class="fc-word" :class="{ 'fc-word-boost': currentCard.boosted }">{{ currentCard.word }}</div>
                   <div v-if="currentCard.boosted" class="fc-boost-tag">曾认识 · 加深印象</div>
-                  <div class="fc-phonetic">{{ currentCard.phonetic || '—' }}</div>
+                  <div class="fc-phonetic">
+                    {{ currentCard.phonetic || '—' }}
+                    <button
+                      class="fc-audio-btn"
+                      :class="{ 'is-playing': playingWord === currentCard.word }"
+                      title="播放发音"
+                      aria-label="播放发音"
+                      @click.stop="playAudio(currentCard)"
+                    >
+                      <AppIcon name="volume-2" :size="16" />
+                    </button>
+                  </div>
                 </div>
 
                 <div class="fc-detail">
@@ -363,7 +374,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { InfoFilled } from '@element-plus/icons-vue'
 import { dueReview, reviewWord, addWord, markMastered } from '@/api/wordBook'
-import { dictRandom, recordStudy, saveReviewBatchSize, getInfo } from '@/api/user'
+import { dictRandom, dictWordAudio, recordStudy, saveReviewBatchSize, getInfo } from '@/api/user'
 import { finishLearnRound, getLearnRoundHistory, deleteLearnRound } from '@/api/learnRound'
 import { useUserStore } from '@/store/user'
 import { useImmersive, isTouchDevice } from '@/composables/useImmersive'
@@ -510,6 +521,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeyDown)
+  stopAudio()
 })
 
 // 键盘快捷键：未揭示时任意键=查看释义；揭示后 1=不记得 2=模糊 3=认识
@@ -649,6 +661,72 @@ function reveal() {
   recordStudy().catch(() => {})
 }
 
+/* ============ 播放发音 ============
+ * 优先播放后端缓存的真人 mp3（uploads/audio/），失败/无音频时降级为浏览器 TTS 朗读。
+ * 同一时刻只播一个：再次点击当前词或切词时先停止上一段。
+ */
+const playingWord = ref('')
+let audioEl = null
+
+function stopAudio() {
+  if (audioEl) {
+    audioEl.pause()
+    audioEl.currentTime = 0
+  }
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel()
+  }
+  playingWord.value = ''
+}
+
+/** 浏览器 TTS 兜底朗读 */
+function speakFallback(word) {
+  if (!('speechSynthesis' in window)) {
+    playingWord.value = ''
+    return
+  }
+  window.speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(word)
+  u.lang = 'en-US'
+  u.rate = 0.95
+  u.onend = () => { if (playingWord.value === word) playingWord.value = '' }
+  u.onerror = () => { if (playingWord.value === word) playingWord.value = '' }
+  window.speechSynthesis.speak(u)
+}
+
+async function playAudio(card) {
+  if (!card || !card.word) return
+  // 正在播放该词 → 点击停止
+  if (playingWord.value === card.word) {
+    stopAudio()
+    return
+  }
+  stopAudio()
+  playingWord.value = card.word
+  const word = card.word
+  try {
+    // 已随单词拉取到 audioUrl 则直接播；否则向后端请求（触发懒下载+回写数据库+Redis），
+    // 拿到后写回卡片：同一轮内反复听只走本地，不再请求接口
+    let url = card.audioUrl
+    if (!url) {
+      url = await dictWordAudio(word)
+      if (url) card.audioUrl = url
+    }
+    if (playingWord.value !== word) return // 期间已切词/停止
+    if (url) {
+      if (!audioEl) audioEl = new Audio()
+      audioEl.src = url
+      audioEl.onended = () => { if (playingWord.value === word) playingWord.value = '' }
+      audioEl.onerror = () => { if (playingWord.value === word) speakFallback(word) }
+      await audioEl.play()
+    } else {
+      speakFallback(word)
+    }
+  } catch (e) {
+    if (playingWord.value === word) speakFallback(word)
+  }
+}
+
 /**
  * 答题入口锁：避免键盘长按 / 快速连点导致同一张卡被多次计入，
  * 进而触发 next() 并发执行、saveCurrentRound() 重复写 learn_round 记录。
@@ -708,6 +786,7 @@ async function doAnswer(level) {
 
 async function next() {
   flipDir.value = 'flip-left'
+  stopAudio()
   if (currentIndex.value + 1 >= cards.value.length) {
     // 最后一卡：先 await 持久化本轮 → 再切到完成页
     // 否则用户立刻点"再来一轮"时 learn_round_item 还没写入，
@@ -922,7 +1001,7 @@ function formatTime(t) {
   max-width: none;
   /* 半透明遮罩 + 背景图：滚动时图片固定在浏览器视口不动 */
   background-image: linear-gradient(rgba(255, 252, 248, 0.45), rgba(255, 252, 248, 0.45)),
-    url('@/assets/images/review-bg.png');
+    url('@/assets/images/review-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1065,6 +1144,10 @@ function formatTime(t) {
     .fc-phonetic {
       font-size: clamp(13px, min(1.5vw, 2.6vh), 20px);
       margin-top: clamp(2px, 0.8vh, 8px);
+    }
+    .fc-audio-btn {
+      width: clamp(22px, min(2vw, 3.6vh), 30px);
+      height: clamp(22px, min(2vw, 3.6vh), 30px);
     }
 
     .fc-detail {
@@ -1721,6 +1804,38 @@ function formatTime(t) {
     color: $text-caption;
     font-family: Georgia, 'Times New Roman', serif;
     letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* 播放发音按钮：音标右侧圆形线性图标，低调不抢视觉 */
+  .fc-audio-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid $gray-5;
+    border-radius: 50%;
+    background: transparent;
+    color: $text-caption;
+    cursor: pointer;
+    transition: color $transition-fast, border-color $transition-fast, background $transition-fast;
+
+    &:hover {
+      color: $color-primary;
+      border-color: $color-primary;
+      background: $color-primary-soft;
+    }
+
+    &.is-playing {
+      color: $color-primary;
+      border-color: $color-primary;
+      animation: audio-pulse 1s ease-in-out infinite;
+    }
   }
 
   .fc-detail {
@@ -2166,5 +2281,11 @@ function formatTime(t) {
     justify-content: center;
     row-gap: $sp-2;
   }
+}
+
+/* 播放中：图标轻微脉冲，提示正在发声 */
+@keyframes audio-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.75; }
 }
 </style>

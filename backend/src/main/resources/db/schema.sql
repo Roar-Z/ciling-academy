@@ -51,6 +51,7 @@ CREATE TABLE `dict_word` (
   `level`       VARCHAR(8)  NOT NULL DEFAULT 'other' COMMENT '主等级: cet4(四级)/cet6(六级)/gaokao(高考)/zhongkao(中考)/other(其他)',
   `levels`      VARCHAR(64) NOT NULL DEFAULT '' COMMENT '词库多标签csv(档位序): zhongkao,gaokao,cet4,cet6——选级过滤用 FIND_IN_SET(levels)',
   `is_core`     TINYINT     NOT NULL DEFAULT 0 COMMENT '是否高频核心词 1=是 0=否（优先推送）',
+  `audio_url`   VARCHAR(255) NOT NULL DEFAULT '' COMMENT '单词发音音频相对路径（/uploads/audio/xxx.mp3，首次播放时自动下载缓存）',
   `created_at`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_word` (`word`),

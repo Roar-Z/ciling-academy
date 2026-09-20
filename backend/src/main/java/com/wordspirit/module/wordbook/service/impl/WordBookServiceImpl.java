@@ -77,6 +77,7 @@ public class WordBookServiceImpl implements WordBookService {
     private final WordBookMapper wordBookMapper;
     private final UserMapper userMapper;
     private final DictWordService dictWordService;
+    private final com.wordspirit.module.dict.service.WordAudioService wordAudioService;
     private final org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
 
     @Override
@@ -205,13 +206,16 @@ public class WordBookServiceImpl implements WordBookService {
     @Override
     public List<WordBook> dueReview(Long userId, int limit) {
         LocalDateTime now = LocalDateTime.now();
-        return wordBookMapper.selectList(new LambdaQueryWrapper<WordBook>()
+        List<WordBook> list = wordBookMapper.selectList(new LambdaQueryWrapper<WordBook>()
                 .eq(WordBook::getUserId, userId)
                 .and(w -> w.isNull(WordBook::getNextReviewAt)
                         .or().le(WordBook::getNextReviewAt, now))
                 // 到期词按时间优先级取一批，再随机顺序返回 ——"再来一轮"换序不换词，
                 // 但避免连续两轮完全相同顺序让用户感到没变化。
                 .last("ORDER BY next_review_at IS NULL DESC, next_review_at ASC, RAND() LIMIT " + limit));
+        // 顺带带上发音音频（已缓存的词才返回，不触发下载）
+        wordAudioService.fillAudioUrls(WordBook::getWord, WordBook::setAudioUrl, list);
+        return list;
     }
 
     @Override
@@ -232,6 +236,7 @@ public class WordBookServiceImpl implements WordBookService {
                 dw.setExample("");
                 dw.setExampleCn("");
                 dw.setLevel(level);
+                dw.setAudioUrl(b.getAudioUrl());
                 result.add(dw);
                 used.add(b.getWord().toLowerCase(Locale.ROOT));
             }

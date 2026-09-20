@@ -552,7 +552,7 @@ async function handleLogout() {
 .ws-footer {
   /* 半透明白遮罩 + 同款固定插画：能透出背景，又保持一条柔和的白色底栏 */
   background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)),
-    url('@/assets/images/review-bg.png');
+    url('@/assets/images/review-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

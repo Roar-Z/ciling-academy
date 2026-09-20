@@ -25,11 +25,22 @@ public class DictWordController {
 
     private final DictWordService dictWordService;
     private final StudyCacheService studyCacheService;
+    private final com.wordspirit.module.dict.service.WordAudioService wordAudioService;
 
     /** 查询单词释义（基础功能，不消耗AI额度） */
     @GetMapping("/word/{word}")
     public Result<DictWord> lookup(@PathVariable String word) {
         return Result.ok(dictWordService.lookup(word));
+    }
+
+    /**
+     * 获取单词发音音频：确保 mp3 已缓存到 uploads/audio/ 并回写数据库，
+     * 返回可访问的相对路径（如 /uploads/audio/optical.mp3）。
+     * 游客可访问（/api/dict/** 已放行）。下载失败返回 null，前端降级为浏览器 TTS。
+     */
+    @GetMapping("/word/{word}/audio")
+    public Result<String> audio(@PathVariable String word) {
+        return Result.ok(wordAudioService.ensureAudio(word));
     }
 
     /** 词典搜索（分页） */
