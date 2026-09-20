@@ -48,6 +48,25 @@ public class WordAudioService {
     /** 音频存放目录（相对后端工作目录，与 WebConfig 的 /uploads/** 静态映射一致） */
     private static final String AUDIO_DIR = "uploads/audio";
 
+    /**
+     * 对外音频访问 URL：走 /api 前缀由本服务流式输出。
+     * 部署环境（帽子云）只把 /api 代理到后端，/uploads 直链会 404，
+     * 因此数据库/Redis/接口一律存这个 API 形式的路径。
+     */
+    public static final String AUDIO_URL_PREFIX = "/api/dict/audio/";
+
+    public static String audioUrlOf(String wordLower) {
+        return AUDIO_URL_PREFIX + wordLower + ".mp3";
+    }
+
+    /** 旧数据兼容：把历史存的 /uploads/audio/xxx.mp3 归一为 /api/dict/audio/xxx.mp3 */
+    public static String normalizeUrl(String url) {
+        if (url != null && url.startsWith("/uploads/audio/")) {
+            return AUDIO_URL_PREFIX + url.substring("/uploads/audio/".length());
+        }
+        return url;
+    }
+
     /** Redis 键前缀：word 发音音频路径缓存（反复播放只走 Redis，不打数据库） */
     private static final String AUDIO_KEY = "dict:audio:";
     private static final Duration AUDIO_TTL = Duration.ofDays(7);
@@ -89,12 +108,13 @@ public class WordAudioService {
         // 2) 已缓存：文件仍在 → 回填 Redis 直接返回；文件丢失（手动清理过）→ 重新下载
         if (audioFileExists(w)) {
             if (dict != null && StrUtil.isNotBlank(dict.getAudioUrl())) {
-                cachePut(w, dict.getAudioUrl());
-                return dict.getAudioUrl();
+                String url = normalizeUrl(dict.getAudioUrl());
+                cachePut(w, url);
+                return url;
             }
             // 词典无此词（如手动添加的生词）：文件已在磁盘，直接返回路径并缓存，不落库
             if (dict == null) {
-                String url = "/" + AUDIO_DIR + "/" + w + ".mp3";
+                String url = audioUrlOf(w);
                 cachePut(w, url);
                 return url;
             }
@@ -123,7 +143,7 @@ public class WordAudioService {
     private String cacheGet(String wordLower) {
         try {
             Object v = redisTemplate.opsForValue().get(AUDIO_KEY + wordLower);
-            return v instanceof String s && StrUtil.isNotBlank(s) ? s : null;
+            return v instanceof String s && StrUtil.isNotBlank(s) ? normalizeUrl(s) : null;
         } catch (Exception e) {
             log.warn("audio cache read failed word={}: {}", wordLower, e.getMessage());
             return null;
@@ -176,7 +196,7 @@ public class WordAudioService {
         Map<String, String> map = new HashMap<>();
         for (DictWord r : rows) {
             if (StrUtil.isNotBlank(r.getAudioUrl())) {
-                map.put(r.getWord().toLowerCase(Locale.ROOT), r.getAudioUrl());
+                map.put(r.getWord().toLowerCase(Locale.ROOT), normalizeUrl(r.getAudioUrl()));
             }
         }
         for (T e : entries) {
@@ -209,7 +229,7 @@ public class WordAudioService {
         }
         try {
             FileUtil.writeBytes(bytes, target);
-            return "/" + AUDIO_DIR + "/" + wordLower + ".mp3";
+            return audioUrlOf(wordLower);
         } catch (Exception e) {
             log.warn("audio write failed word={}: {}", wordLower, e.getMessage());
             return null;
@@ -227,5 +247,20 @@ public class WordAudioService {
 
     private boolean audioFileExists(String wordLower) {
         return new File(AUDIO_DIR, wordLower + ".mp3").isFile();
+    }
+
+    /**
+     * 解析音频文件（供 /api/dict/audio/{filename} 端点流式输出）。
+     * 仅接受 {word}.mp3 形式，防路径穿越。
+     */
+    public org.springframework.core.io.FileSystemResource resolveAudioFile(String filename) {
+        if (filename == null || !filename.matches("[A-Za-z][A-Za-z'\\-]{0,63}\\.mp3")) {
+            return null;
+        }
+        File f = new File(AUDIO_DIR, filename);
+        if (!f.isFile()) {
+            return null;
+        }
+        return new org.springframework.core.io.FileSystemResource(f);
     }
 }

@@ -35,12 +35,29 @@ public class DictWordController {
 
     /**
      * 获取单词发音音频：确保 mp3 已缓存到 uploads/audio/ 并回写数据库，
-     * 返回可访问的相对路径（如 /uploads/audio/optical.mp3）。
+     * 返回可访问的相对路径（如 /api/dict/audio/optical.mp3）。
      * 游客可访问（/api/dict/** 已放行）。下载失败返回 null，前端降级为浏览器 TTS。
      */
     @GetMapping("/word/{word}/audio")
     public Result<String> audio(@PathVariable String word) {
         return Result.ok(wordAudioService.ensureAudio(word));
+    }
+
+    /**
+     * 流式输出音频文件本体。部署环境只代理 /api 前缀（/uploads 直链 404），
+     * 因此音频统一经此端点访问。命中时给浏览器 30 天强缓存。
+     */
+    @GetMapping("/audio/{filename}")
+    public org.springframework.http.ResponseEntity<org.springframework.core.io.FileSystemResource> audioFile(
+            @PathVariable String filename) {
+        org.springframework.core.io.FileSystemResource res = wordAudioService.resolveAudioFile(filename);
+        if (res == null) {
+            return org.springframework.http.ResponseEntity.notFound().build();
+        }
+        return org.springframework.http.ResponseEntity.ok()
+                .header("Content-Type", "audio/mpeg")
+                .header("Cache-Control", "public, max-age=2592000")
+                .body(res);
     }
 
     /** 词典搜索（分页） */
