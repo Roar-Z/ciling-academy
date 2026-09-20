@@ -725,13 +725,16 @@ function speakFallback(word) {
     playingWord.value = ''
     return
   }
-  window.speechSynthesis.cancel()
+  const synth = window.speechSynthesis
+  synth.cancel()
   const u = new SpeechSynthesisUtterance(word)
   u.lang = 'en-US'
   u.rate = 0.95
   u.onend = () => { if (playingWord.value === word) playingWord.value = '' }
   u.onerror = () => { if (playingWord.value === word) playingWord.value = '' }
-  window.speechSynthesis.speak(u)
+  // Chrome 已知问题：cancel() 后同一任务里立即 speak() 会被引擎静默丢弃，
+  // 推迟一个宏任务再 speak 即可正常发声
+  setTimeout(() => synth.speak(u), 60)
 }
 
 /**
