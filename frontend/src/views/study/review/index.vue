@@ -370,7 +370,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { InfoFilled } from '@element-plus/icons-vue'
 import { dueReview, reviewWord, addWord, markMastered } from '@/api/wordBook'
@@ -664,9 +664,28 @@ function reveal() {
 /* ============ 播放发音 ============
  * 优先播放后端缓存的真人 mp3（uploads/audio/），失败/无音频时降级为浏览器 TTS 朗读。
  * 同一时刻只播一个：再次点击当前词或切词时先停止上一段。
+ * 首次播放的词后端要从有道同步下载（跨境链路慢），因此卡片出现时先静默预取，
+ * 用户点击时音频已就绪，消除点击后的数秒延迟。
  */
 const playingWord = ref('')
 let audioEl = null
+/** 已预取过的词（含失败词，避免重复请求） */
+const prefetched = new Set()
+
+function prefetchAudio(card) {
+  if (!card || !card.word || card.audioUrl || prefetched.has(card.word)) return
+  prefetched.add(card.word)
+  dictWordAudio(card.word)
+    .then((url) => { if (url) card.audioUrl = url })
+    .catch(() => {})
+}
+
+// 当前卡与下一卡展示时预取音频（watch 自动覆盖翻卡 / 恢复进度等所有切卡路径）
+watch(currentCard, (card, old) => {
+  if (card) prefetchAudio(card)
+  const idx = cards.value.indexOf(card)
+  if (idx >= 0 && cards.value[idx + 1] !== old) prefetchAudio(cards.value[idx + 1])
+}, { immediate: true })
 
 function stopAudio() {
   if (audioEl) {
