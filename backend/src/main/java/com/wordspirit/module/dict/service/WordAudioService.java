@@ -55,8 +55,8 @@ public class WordAudioService {
     /** 单词只允许字母（含连字符/撇号），防止路径穿越与非法 URL */
     private static final String WORD_PATTERN = "[A-Za-z][A-Za-z'\\-]{0,63}";
 
-    /** 下载超时：3 秒拿不到就放弃，前端降级为浏览器 TTS 朗读 */
-    private static final int DOWNLOAD_TIMEOUT_MS = 3000;
+    /** 下载超时：2 秒拿不到就换源/放弃，前端降级为浏览器 TTS 朗读 */
+    private static final int DOWNLOAD_TIMEOUT_MS = 2000;
 
     /** 按单词粒度的进程内锁，避免同一词并发重复下载 */
     private final ConcurrentHashMap<String, Object> locks = new ConcurrentHashMap<>();

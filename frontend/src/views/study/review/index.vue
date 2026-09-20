@@ -664,27 +664,43 @@ function reveal() {
 /* ============ 播放发音 ============
  * 优先播放后端缓存的真人 mp3（uploads/audio/），失败/无音频时降级为浏览器 TTS 朗读。
  * 同一时刻只播一个：再次点击当前词或切词时先停止上一段。
- * 首次播放的词后端要从有道同步下载（跨境链路慢），因此卡片出现时先静默预取，
- * 用户点击时音频已就绪，消除点击后的数秒延迟。
+ * 首次播放的词后端要从有道下载（跨境链路慢），因此整批卡片一就绪就并行预取，
+ * 并预热浏览器缓存；点击时复用进行中的请求，做到即点即响。
  */
 const playingWord = ref('')
 let audioEl = null
-/** 已预取过的词（含失败词，避免重复请求） */
-const prefetched = new Set()
+/** word → 预取 Promise（点击与切卡复用同一请求，失败后移除以允许重试） */
+const prefetchMap = new Map()
 
 function prefetchAudio(card) {
-  if (!card || !card.word || card.audioUrl || prefetched.has(card.word)) return
-  prefetched.add(card.word)
-  dictWordAudio(card.word)
-    .then((url) => { if (url) card.audioUrl = url })
-    .catch(() => {})
+  if (!card || !card.word || card.audioUrl || prefetchMap.has(card.word)) return
+  const p = dictWordAudio(card.word)
+    .then((url) => {
+      if (url) {
+        card.audioUrl = url
+        // 预热浏览器缓存，点击时 play() 无需再等下载
+        const warm = new Audio()
+        warm.preload = 'auto'
+        warm.src = url
+        warm.load()
+      }
+      return url || null
+    })
+    .catch(() => {
+      prefetchMap.delete(card.word)
+      return null
+    })
+  prefetchMap.set(card.word, p)
 }
 
-// 当前卡与下一卡展示时预取音频（watch 自动覆盖翻卡 / 恢复进度等所有切卡路径）
-watch(currentCard, (card, old) => {
-  if (card) prefetchAudio(card)
+// 整批词一次性并行预取（后端各词独立下载互不阻塞，翻到后面早已就绪）
+watch(cards, (list) => { (list || []).forEach(prefetchAudio) }, { immediate: true })
+// 切卡时兜底预取当前 + 下一张（覆盖卡片列表晚于本组件挂载才到达的场景）
+watch(currentCard, (card) => {
+  if (!card) return
+  prefetchAudio(card)
   const idx = cards.value.indexOf(card)
-  if (idx >= 0 && cards.value[idx + 1] !== old) prefetchAudio(cards.value[idx + 1])
+  if (idx >= 0) prefetchAudio(cards.value[idx + 1])
 }, { immediate: true })
 
 function stopAudio() {
@@ -724,11 +740,11 @@ async function playAudio(card) {
   playingWord.value = card.word
   const word = card.word
   try {
-    // 已随单词拉取到 audioUrl 则直接播；否则向后端请求（触发懒下载+回写数据库+Redis），
-    // 拿到后写回卡片：同一轮内反复听只走本地，不再请求接口
+    // 已随单词拉取到 audioUrl 则直接播；预取还在路上就复用同一个请求（不重复发）；
+    // 都没有才向后端请求（触发懒下载+回写数据库+Redis）
     let url = card.audioUrl
     if (!url) {
-      url = await dictWordAudio(word)
+      url = await (prefetchMap.get(word) || Promise.resolve()).then((u) => u ?? dictWordAudio(word))
       if (url) card.audioUrl = url
     }
     if (playingWord.value !== word) return // 期间已切词/停止
