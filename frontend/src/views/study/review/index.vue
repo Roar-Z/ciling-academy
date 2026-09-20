@@ -696,17 +696,16 @@ function prefetchAudio(card) {
 // 整批词一次性并行预取（后端各词独立下载互不阻塞，翻到后面早已就绪）
 watch(cards, (list) => { (list || []).forEach(prefetchAudio) }, { immediate: true })
 // 切卡时兜底预取当前 + 下一张（覆盖卡片列表晚于本组件挂载才到达的场景）
-let autoSpeakTimer = null
 watch(currentCard, (card) => {
   if (!card) return
+  console.log('[AUTOPLAY] card changed ->', card.word, 'playing=', playingWord.value)
   prefetchAudio(card)
   const idx = cards.value.indexOf(card)
   if (idx >= 0) prefetchAudio(cards.value[idx + 1])
-  // 单词出现时自动读一遍（每张卡只播一次；无手势被拦截则静默跳过）
-  if (playingWord.value !== card.word) {
-    if (autoSpeakTimer) clearTimeout(autoSpeakTimer)
-    autoSpeakTimer = setTimeout(() => playWord(card, true), 300)
-  }
+  // 单词出现时自动读一遍。必须在 watch（微任务）里同步触发：
+  // 切卡由答题点击引起，微任务仍保留浏览器"用户手势激活"，play() 才不被拦截；
+  // 若放进 setTimeout 则激活丢失、play() 被静默阻止。仅播已缓存音频见 playWord。
+  if (playingWord.value !== card.word) playWord(card, true)
 }, { immediate: true })
 
 function stopAudio() {
@@ -759,6 +758,7 @@ async function playWord(card, auto = false) {
       audioEl.onended = () => { if (playingWord.value === word) playingWord.value = '' }
       audioEl.onerror = () => { if (playingWord.value === word) (auto ? (playingWord.value = '') : speakFallback(word)) }
       await audioEl.play()
+      console.log('[AUTOPLAY] played ->', word, 'auto=', auto)
     } else if (!auto) {
       speakFallback(word)
     } else {
@@ -766,6 +766,7 @@ async function playWord(card, auto = false) {
     }
   } catch (e) {
     // 自动播放被拦截（浏览器策略）→ 静默；手动播放失败 → 降级 TTS
+    console.log('[AUTOPLAY] play blocked/error ->', word, e && e.name)
     if (playingWord.value === word) {
       if (auto) playingWord.value = ''
       else speakFallback(word)
