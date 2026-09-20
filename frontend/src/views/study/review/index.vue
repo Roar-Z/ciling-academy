@@ -696,11 +696,17 @@ function prefetchAudio(card) {
 // 整批词一次性并行预取（后端各词独立下载互不阻塞，翻到后面早已就绪）
 watch(cards, (list) => { (list || []).forEach(prefetchAudio) }, { immediate: true })
 // 切卡时兜底预取当前 + 下一张（覆盖卡片列表晚于本组件挂载才到达的场景）
+let autoSpeakTimer = null
 watch(currentCard, (card) => {
   if (!card) return
   prefetchAudio(card)
   const idx = cards.value.indexOf(card)
   if (idx >= 0) prefetchAudio(cards.value[idx + 1])
+  // 单词出现时自动读一遍（每张卡只播一次；无手势被拦截则静默跳过）
+  if (playingWord.value !== card.word) {
+    if (autoSpeakTimer) clearTimeout(autoSpeakTimer)
+    autoSpeakTimer = setTimeout(() => playWord(card, true), 300)
+  }
 }, { immediate: true })
 
 function stopAudio() {
@@ -729,16 +735,15 @@ function speakFallback(word) {
   window.speechSynthesis.speak(u)
 }
 
-async function playAudio(card) {
+/**
+ * 播放一个单词的发音。
+ * @param card 目标卡片
+ * @param auto 是否为切卡自动播放：true 时不做"再点停止"、且被浏览器自动播放策略拦截时静默放弃
+ */
+async function playWord(card, auto = false) {
   if (!card || !card.word) return
-  // 正在播放该词 → 点击停止
-  if (playingWord.value === card.word) {
-    stopAudio()
-    return
-  }
-  stopAudio()
-  playingWord.value = card.word
   const word = card.word
+  playingWord.value = word
   try {
     // 已随单词拉取到 audioUrl 则直接播；预取还在路上就复用同一个请求（不重复发）；
     // 都没有才向后端请求（触发懒下载+回写数据库+Redis）
@@ -752,14 +757,31 @@ async function playAudio(card) {
       if (!audioEl) audioEl = new Audio()
       audioEl.src = url
       audioEl.onended = () => { if (playingWord.value === word) playingWord.value = '' }
-      audioEl.onerror = () => { if (playingWord.value === word) speakFallback(word) }
+      audioEl.onerror = () => { if (playingWord.value === word) (auto ? (playingWord.value = '') : speakFallback(word)) }
       await audioEl.play()
-    } else {
+    } else if (!auto) {
       speakFallback(word)
+    } else {
+      playingWord.value = ''
     }
   } catch (e) {
-    if (playingWord.value === word) speakFallback(word)
+    // 自动播放被拦截（浏览器策略）→ 静默；手动播放失败 → 降级 TTS
+    if (playingWord.value === word) {
+      if (auto) playingWord.value = ''
+      else speakFallback(word)
+    }
   }
+}
+
+/** 点击播放按钮：同词再点则停止 */
+function playAudio(card) {
+  if (!card || !card.word) return
+  if (playingWord.value === card.word) {
+    stopAudio()
+    return
+  }
+  stopAudio()
+  playWord(card, false)
 }
 
 /**
