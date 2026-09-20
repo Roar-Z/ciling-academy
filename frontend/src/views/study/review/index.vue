@@ -1845,30 +1845,33 @@ function formatTime(t) {
     gap: 8px;
   }
 
-  /* 播放发音按钮：音标右侧圆形线性图标，低调不抢视觉 */
+  /* 播放发音按钮：主流词典应用样式——浅灰实心圆 + 深色图标，播放时主题色圆底白图标 */
   .fc-audio-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     padding: 0;
-    border: 1px solid $gray-5;
+    border: none;
     border-radius: 50%;
-    background: transparent;
-    color: $text-caption;
+    background: $gray-3;
+    color: $text-body;
     cursor: pointer;
-    transition: color $transition-fast, border-color $transition-fast, background $transition-fast;
+    transition: background $transition-fast, color $transition-fast, transform $transition-fast;
 
     &:hover {
-      color: $color-primary;
-      border-color: $color-primary;
-      background: $color-primary-soft;
+      background: $gray-4;
+      color: $text-title;
+    }
+
+    &:active {
+      transform: scale(0.92);
     }
 
     &.is-playing {
-      color: $color-primary;
-      border-color: $color-primary;
+      background: $color-primary;
+      color: $text-on-primary;
       animation: audio-pulse 1s ease-in-out infinite;
     }
   }
