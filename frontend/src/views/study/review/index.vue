@@ -713,13 +713,18 @@ function stopAudio() {
     audioEl.pause()
     audioEl.currentTime = 0
   }
+  if (ttsTimer) {
+    clearTimeout(ttsTimer)
+    ttsTimer = null
+  }
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     window.speechSynthesis.cancel()
   }
   playingWord.value = ''
 }
 
-/** 浏览器 TTS 兜底朗读 */
+/** 浏览器 TTS 兜底朗读（带去重：onerror 与 play() reject 可能同时触发，只读一次） */
+let ttsTimer = null
 function speakFallback(word) {
   if (!('speechSynthesis' in window)) {
     playingWord.value = ''
@@ -727,6 +732,7 @@ function speakFallback(word) {
   }
   const synth = window.speechSynthesis
   synth.cancel()
+  if (ttsTimer) clearTimeout(ttsTimer)
   const u = new SpeechSynthesisUtterance(word)
   u.lang = 'en-US'
   u.rate = 0.95
@@ -734,7 +740,7 @@ function speakFallback(word) {
   u.onerror = () => { if (playingWord.value === word) playingWord.value = '' }
   // Chrome 已知问题：cancel() 后同一任务里立即 speak() 会被引擎静默丢弃，
   // 推迟一个宏任务再 speak 即可正常发声
-  setTimeout(() => synth.speak(u), 60)
+  ttsTimer = setTimeout(() => { ttsTimer = null; synth.speak(u) }, 60)
 }
 
 /**
